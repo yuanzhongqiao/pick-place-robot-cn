@@ -1,953 +1,954 @@
-## Pick-Place Robot
-<!--<h4>Object picking and stowing with a 6-DOF KUKA KR210 <br>anthropomorphic articulated robotic manipulator<br>using ROS</h4>-->
+<div class="Box-sc-g0xbh4-0 bJMeLZ js-snippet-clipboard-copy-unpositioned" data-hpc="true"><article class="markdown-body entry-content container-lg" itemprop="text"><h2 tabindex="-1" dir="auto"><a id="user-content-pick-place-robot" class="anchor" aria-hidden="true" tabindex="-1" href="#pick-place-robot"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">取放机器人</font></font></h2>
 
-<p align="center">
-<b><i>Object picking and stowing with a 6-DOF KUKA KR210 anthropomorphic  robotic serial manipulator using ROS</i></b>
+<p align="center" dir="auto">
+<b><i><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用 ROS 使用 6 自由度 KUKA KR210 拟人机器人串行操纵器拾取和装载物体</font></font></i></b>
 </p>
-
-<p align="center">
-<img src="figures/1-intro/gazebo_intro_v2.png" alt="" width="51%"><img src="figures/1-intro/moveit_intro_v3.png" alt="" width="47.1%">
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/gazebo_intro_v2.png" class=""><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/gazebo_intro_v2.png" alt="" width="51%" style="max-width: 100%;"></a><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/moveit_intro_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/moveit_intro_v3.png" alt="" width="47.1%" style="max-width: 100%;"></a>
 </p>
-
-<p align="center">
-<b>Salman Hashmi</b>
+<p align="center" dir="auto">
+<b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">萨尔曼·哈希米</font></font></b>
 <br>
-<a href="mailto:sah517@g.harvard.edu" target="_top">sah517@g.harvard.edu</a>
+<a href="mailto:sah517@g.harvard.edu"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">sah517@g.harvard.edu</font></font></a>
 </p>
-
-------------
-
-<a id="top"></a>
-### Contents
-1. [Introduction](#1.0)
-2. [Environment Setup](#2.0)
-3. [Theoretical Background](#3.0)
-4. [Design Requirements](#4.0)
-5. [Design Implementation](#5.0)
-7. [Testing and Review](#6.0)
-
-------------
-
-### Abbreviations
-
-* **DOF** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Degrees Of Freedom](https://en.wikipedia.org/wiki/Degrees_of_freedom_(mechanics))
-* **ROS** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Robot Operating System](http://www.ros.org/)
-* **ARC** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Amazon Robotics Challenge](https://www.amazonrobotics.com/#/roboticschallenge)
-* **ISS** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [International Space Station](https://en.wikipedia.org/wiki/International_Space_Station)
-* **EVA** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Extra Vehicular Activity](https://en.wikipedia.org/wiki/Extravehicular_activity)
-* **EE** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [End-Effector](https://en.wikipedia.org/wiki/Robot_end_effector)
-* **WC** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Wrist Center](https://www.youtube.com/watch?v=V_6diIcQl0U)
-* **DH** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Denavit–Hartenberg](https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters)
-* **FK** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Forward Kinematics](https://en.wikipedia.org/wiki/Forward_kinematics)
-* **IK** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Inverse Kinematics](https://en.wikipedia.org/wiki/Inverse_kinematics)
-* **RRR** &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [Revolute Revolute Revolute](http://www.roboticsbible.com/robot-links-and-joints.html)
-* **URDF** &nbsp;&nbsp;&nbsp; [Unified Robot Description Format](http://wiki.ros.org/urdf)
-
-------------
-
-<a name="1.0"></a>
-### 1. Introduction
-This project originated from Udacity's [Robotic arm - Pick & Place project](https://github.com/udacity/RoboND-Kinematics-Project), which, in turn is based on the [**Amazon** Robotics Challenge](https://www.amazonrobotics.com/#/roboticschallenge) sponsored by Amazon Robotics LLC.
-
-<p align="center">
-<img src="figures/1-intro/amazon_robo_arm.png" alt="" width="53%">
+<hr>
+<p dir="auto"><a id="user-content-top"></a></p>
+<h3 tabindex="-1" dir="auto"><a id="user-content-contents" class="anchor" aria-hidden="true" tabindex="-1" href="#contents"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">内容</font></font></h3>
+<ol dir="auto">
+<li><a href="#1.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">介绍</font></font></a></li>
+<li><a href="#2.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">环境设置</font></font></a></li>
+<li><a href="#3.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">理论背景</font></font></a></li>
+<li><a href="#4.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">设计要求</font></font></a></li>
+<li><a href="#5.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">设计实施</font></font></a></li>
+<li><a href="#6.0"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测试和审查</font></font></a></li>
+</ol>
+<hr>
+<h3 tabindex="-1" dir="auto"><a id="user-content-abbreviations" class="anchor" aria-hidden="true" tabindex="-1" href="#abbreviations"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">缩写</font></font></h3>
+<ul dir="auto">
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">DOF</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Degrees_of_freedom_(mechanics)" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">自由度</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="http://www.ros.org/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人操作系统</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ARC</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://www.amazonrobotics.com/#/roboticschallenge" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">亚马逊机器人挑战赛</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">国际空间站</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/International_Space_Station" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">国际空间站</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EVA</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Extravehicular_activity" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">舱外活动</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Robot_end_effector" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">末端执行器</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">WC</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://www.youtube.com/watch?v=V_6diIcQl0U" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">手腕中心</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">DH</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">德纳维特-哈滕贝格</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">FK</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Forward_kinematics" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">正向运动学</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">IK</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Inverse_kinematics" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆运动学</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">RRR</font></font></strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="http://www.roboticsbible.com/robot-links-and-joints.html" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">旋转式 旋转式 旋转式</font></font></a></li>
+<li><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">URDF</font></font></strong> &nbsp;&nbsp;&nbsp; <a href="http://wiki.ros.org/urdf" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">统一机器人描述格式</font></font></a></li>
+</ul>
+<hr>
+<p dir="auto"><a name="user-content-1.0"></a></p>
+<h3 tabindex="-1" dir="auto"><a id="user-content-1-introduction" class="anchor" aria-hidden="true" tabindex="-1" href="#1-introduction"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一、简介</font></font></h3>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目源自 Udacity 的</font></font><a href="https://github.com/udacity/RoboND-Kinematics-Project"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机械臂 - Pick &amp; Place 项目</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，而该项目又基于</font><font style="vertical-align: inherit;">Amazon Robotics LLC 赞助的</font></font><a href="https://www.amazonrobotics.com/#/roboticschallenge" rel="nofollow"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">亚马逊</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人挑战赛。</font></font></a><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/amazon_robo_arm.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/amazon_robo_arm.png" alt="" width="53%" style="max-width: 100%;"></a>
 <br>
-<sup><b>Fig. 1.1&nbsp;&nbsp;A robotic arm shelving products in an Amazon fulfillment center</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 1.1 亚马逊运营中心的机械臂上架产品</font></font></b></sup>
 </p>
-
-##### Objective
-Commercially viable automated picking and stowing in unstructured environments, like picking products off shelves and putting them into shipping boxes, still remains a difficult challenge. The goal of the ARC is to perform simplified versions of the general task of picking and stowing items on shelves. As per *ARC Rules*: "The Challenge combines object recognition, pose recognition, grasp planning, compliant manipulation, motion planning, task planning, task execution, and error detection and recovery". 
-
-The objective of this project is to demonstrate autonomous capability of the KR210 [serial manipulator](https://en.wikipedia.org/wiki/Serial_manipulator) in simulation to *pick and place* an object in a semi-unstructured environment.
-
-Within the context of this project, a single *pick and place* cycle can be divided into the following tasks:
-
-* Identify the target object on the shelf
-* Plan and perform a clean movement towards the object
-* Efficiently grasp/pick the target object without disturbing other objects
-* Plan and perform a clean movement towards the drop-off site
-* Efficiently stow/place the object at the drop-off site
-
-##### Relevance
-The capability of picking and placing objects relies on being able to locate points of interest in a 3D environment and planning movement trajectories to those points. All robotic manipulators in industry depend on this capability. 
-
-<p align="center">
-<img src="figures/1-intro/relevance.png" alt="" width="73%">
+<h5 tabindex="-1" dir="auto"><a id="user-content-objective" class="anchor" aria-hidden="true" tabindex="-1" href="#objective"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">客观的</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在非结构化环境中实现商业上可行的自动拣选和装载（例如从货架上拣选产品并将其放入运输箱中）仍然是一个艰巨的挑战。</font><font style="vertical-align: inherit;">ARC 的目标是执行在货架上挑选和存放物品的一般任务的简化版本。</font><font style="vertical-align: inherit;">根据</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ARC 规则</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：“挑战赛结合了对象识别、姿势识别、抓取规划、合规操作、运动规划、任务规划、任务执行以及错误检测和恢复”。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目的目标是</font><font style="vertical-align: inherit;">在模拟中展示 KR210</font></font><a href="https://en.wikipedia.org/wiki/Serial_manipulator" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">串行机械手</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在半非结构化环境中</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拾取和放置物体的自主能力。</font></font></em><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在此项目的背景下，单个</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拾取和放置</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">周期可分为以下任务：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">识别货架上的目标物体</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">计划并执行朝向该物体的干净运动</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">有效抓取/拾取目标物体而不干扰其他物体</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">计划并以干净的方式前往下车地点</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将物体有效地存放/放置在投放地点</font></font></li>
+</ul>
+<h5 tabindex="-1" dir="auto"><a id="user-content-relevance" class="anchor" aria-hidden="true" tabindex="-1" href="#relevance"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关联</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拾取和放置对象的能力依赖于能够在 3D 环境中定位兴趣点并规划到这些点的移动轨迹。</font><font style="vertical-align: inherit;">工业中的所有机器人操纵器都依赖于这种能力。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/relevance.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/relevance.png" alt="" width="73%" style="max-width: 100%;"></a>
 <br>
-<sup><b>Fig. 1.2&nbsp;&nbsp;Robotic serial manipulators can be found in almost every industry</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图1.2 机器人串行机械手几乎遍布各个行业</font></font></b></sup>
 </p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人操纵器几乎在每个行业都无处不在。</font><font style="vertical-align: inherit;">从食品、饮料、运输和包装到制造、铸造和航天：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在面包店堆垛食品</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">汽车、飞机精密涂装</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将产品定位到仓库中的包装站</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">钢材切割和钢桥制造</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">点焊和自动化铸造工艺</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">协助部署卫星</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">航天器与国际空间站的对接和停泊</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在 EVA 期间协助宇航员的活动</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">所有这些工作都需要相同的核心能力，即机器人手臂的末端执行器到达其工作空间内的特定 3D 坐标，以便它可以与该位置的环境进行交互，正如本项目旨在演示的那样。</font></font></p>
+<hr>
+<p dir="auto"><a name="user-content-2.0"></a></p>
 
-Robotic manipulators have become ubiquitous in almost every industry; from food, beverage, shipping and packaging to manufacturing, foundry and space:
-
-* Palletizing food in a bakery
-* Precision painting of automobiles and aircrafts
-* Targeting products to their packaging stations in a warehouse
-* Cutting steel and manufacturing of steel bridges
-* Spot Welding and automating foundry processes
-* Assisting in the deployment of satellites
-* Docking and berthing of spacecrafts to the ISS
-* Assisting in the mobility of astronauts during EVA
-
-All of these jobs require the same core capability, namely, that of the robotic arm's end-effector to reach specific 3D coordinates within its workspace so that it can interact with the environment at that location, as this project aims to demonstrate.
-
-------------
-
-<a name="2.0"></a>
-<!--<div style="text-align:left;">
-  <span style="font-size: 1.4em; margin-top: 0.83em; margin-bottom: 0.83em; margin-left: 0; margin-right: 0; font-weight: bold;"> 2. Environment Setup</span><span style="float:right;"><a href="#top">Back to Top</a></span>
-</div>-->
-### 2. Environment Setup
-The project uses [ROS Kinetic Kame](http://wiki.ros.org/kinetic) running on [Ubuntu 16.04 LTS (Xenial Xerus)](http://releases.ubuntu.com/16.04/).
-
-The following tools are used for simulation and motion planning:
-
-* [Gazebo](http://gazebosim.org/): a physics based 3D simulator extensively used in the robotics world
-* [RViz](http://wiki.ros.org/rviz): a 3D visualizer for sensor data analysis, and robot state visualization
-* [MoveIt!](http://moveit.ros.org/): a ROS based software framework for motion planning, kinematics and robot control
-
-Once ROS is installed, we can proceed with the environment setup for the project:
-
-##### Verify Project Tools
-
-1\. Verify the version of gazebo installed with ROS
-```sh
-$ gazebo --version
-```
-2\. If the installed gazebo version is not 7.7.0+, update it as follows
-```sh
-$ sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+<h3 tabindex="-1" dir="auto"><a id="user-content-2-environment-setup" class="anchor" aria-hidden="true" tabindex="-1" href="#2-environment-setup"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2. 环境设置</font></font></h3>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目使用在</font><a href="http://releases.ubuntu.com/16.04/" rel="nofollow"><font style="vertical-align: inherit;">Ubuntu 16.04 LTS (Xenial Xerus)</font></a><font style="vertical-align: inherit;">上运行的</font></font><a href="http://wiki.ros.org/kinetic" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS Kinetic Kame</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font><a href="http://releases.ubuntu.com/16.04/" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以下工具用于模拟和运动规划：</font></font></p>
+<ul dir="auto">
+<li><a href="http://gazebosim.org/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Gazebo</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：基于物理的 3D 模拟器，广泛应用于机器人领域</font></font></li>
+<li><a href="http://wiki.ros.org/rviz" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">RViz</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：用于传感器数据分析和机器人状态可视化的 3D 可视化工具</font></font></li>
+<li><a href="http://moveit.ros.org/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">动起来！</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：基于 ROS 的运动规划、运动学和机器人控制软件框架</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS安装完成后，我们就可以继续进行项目的环境设置：</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-verify-project-tools" class="anchor" aria-hidden="true" tabindex="-1" href="#verify-project-tools"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">验证项目工具</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1.验证ROS安装的gazebo版本</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ gazebo --version</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ gazebo --version" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2.如果安装的gazebo版本不是7.7.0+，请按如下方式更新</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ sudo sh -c <span class="pl-s"><span class="pl-pds">'</span>echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" &gt; /etc/apt/sources.list.d/gazebo-stable.list<span class="pl-pds">'</span></span>
+$ wget http://packages.osrfoundation.org/gazebo.key -O - <span class="pl-k">|</span> sudo apt-key add -
+$ sudo apt-get update
+$ sudo apt-get install gazebo7</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ sudo sh -c 'echo &quot;deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main&quot; > /etc/apt/sources.list.d/gazebo-stable.list'
 $ wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 $ sudo apt-get update
-$ sudo apt-get install gazebo7
-```
-
-##### Create ROS Workspace
-3\. Create a [catkin](http://wiki.ros.org/catkin/conceptual_overview) workspace if haven't already
-```sh
-$ mkdir -p ~/catkin_ws/src
+$ sudo apt-get install gazebo7" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<h5 tabindex="-1" dir="auto"><a id="user-content-create-ros-workspace" class="anchor" aria-hidden="true" tabindex="-1" href="#create-ros-workspace"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">创建ROS工作空间</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3. 创建一个</font></font><a href="http://wiki.ros.org/catkin/conceptual_overview" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">catkin</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">工作区（如果还没有）</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ mkdir -p <span class="pl-k">~</span>/catkin_ws/src
+$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/
+$ catkin_init_workspace
+$ ls -l</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ mkdir -p ~/catkin_ws/src
 $ cd ~/catkin_ws/
 $ catkin_init_workspace
-$ ls -l
-```
-Notice that a symbolic link (CMakeLists.txt) has been created to `/opt/ros/kinetic/share/catkin/cmake/toplevel.cmake`
-
-4\. Clone or download project repository into the *src* directory of the catkin workspace
-```sh
-cd ~/catkin_ws/src
-$ git clone https://github.com/Salman-H/pick-place-robot
-```
-
-5\. Install missing dependencies if any
-```sh
-$ cd ~/catkin_ws
-$ rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y
-```
-
-6\. Change the permissions of script files to turn them executable
-```sh
-$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ ls -l" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请注意，已创建一个符号链接 (CMakeLists.txt)</font></font><code>/opt/ros/kinetic/share/catkin/cmake/toplevel.cmake</code></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">4.克隆或下载项目存储库到</font><font style="vertical-align: inherit;">catkin工作区的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">src目录中</font></font></em><font style="vertical-align: inherit;"></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src
+$ git clone https://github.com/Salman-H/pick-place-robot</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws/src
+$ git clone https://github.com/Salman-H/pick-place-robot" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5. 安装缺少的依赖项（如果有）</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws
+$ rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws
+$ rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6. 更改脚本文件的权限，使其可执行</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
 $ sudo chmod u+x target_spawn.py
 $ sudo chmod u+x IK_server.py
-$ sudo chmod u+x safe_spawner.sh
-```
+$ sudo chmod u+x safe_spawner.sh</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ sudo chmod u+x target_spawn.py
+$ sudo chmod u+x IK_server.py
+$ sudo chmod u+x safe_spawner.sh" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7. 构建项目</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws
+$ catkin_make</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws
+$ catkin_make" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.打开</font><em><font style="vertical-align: inherit;">主</font></em><font style="vertical-align: inherit;">目录中的</font></font><a href="https://unix.stackexchange.com/questions/129143/what-is-the-purpose-of-bashrc-and-how-does-it-work" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">.bashrc文件</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">并在末尾添加以下命令</font></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c"><span class="pl-c">#</span> Inform Gazebo (sim software) where to look for project custom 3D models</span>
+<span class="pl-k">export</span> GAZEBO_MODEL_PATH=<span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/models
 
-7\. Build the project
-```sh
-$ cd ~/catkin_ws
-$ catkin_make
-```
-
-8\. Open [.bashrc file](https://unix.stackexchange.com/questions/129143/what-is-the-purpose-of-bashrc-and-how-does-it-work) found in the *home* directory and add the following commands at the end
-```sh
-# Inform Gazebo (sim software) where to look for project custom 3D models
+<span class="pl-c"><span class="pl-c">#</span> Auto-source setup.bash since the pick and place simulator spins up different nodes in separate terminals</span>
+<span class="pl-c1">source</span> <span class="pl-k">~</span>/catkin_ws/devel/setup.bash</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="# Inform Gazebo (sim software) where to look for project custom 3D models
 export GAZEBO_MODEL_PATH=~/catkin_ws/src/pick-place-robot/kuka_arm/models
 
 # Auto-source setup.bash since the pick and place simulator spins up different nodes in separate terminals
-source ~/catkin_ws/devel/setup.bash
-```
-9\. Save the .bashrc file and open a new terminal for changes to take effect
+source ~/catkin_ws/devel/setup.bash" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">9. 保存 .bashrc 文件并打开新终端以使更改生效</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-test-simulator" class="anchor" aria-hidden="true" tabindex="-1" href="#test-simulator"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测试模拟器</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">可以通过在演示</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">模式下启动项目来测试模拟器环境</font><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">10. 打开</font></font><code>inverse_kinematics.launch</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">下面的文件</font></font><code>/pick-and-place/kuka_arm/launch/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">并将</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">演示</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">标志设置为</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">“true”</font></font></em></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">此外，如果需要，可以修改目标对象的生成位置。</font><font style="vertical-align: inherit;">为此，请修改</font><font style="vertical-align: inherit;">下面的</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">spawn_location</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">参数</font><font style="vertical-align: inherit;">，其中0-9是spawn_location的有效值，其中0是随机模式。</font></font><code>target_description.launch</code><font style="vertical-align: inherit;"></font><code>/pick-and-place/kuka_arm/launch/</code><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11. 通过在新终端中调用 safe_spawner shell 脚本来启动项目</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ ./safe_spawner.sh</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ ./safe_spawner.sh" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如果 Gazebo 和 RViz 在几秒钟内没有启动，请通过</font></font><code>Ctrl+C</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在每个弹出的终端中输入来关闭由此 shell 脚本启动的所有进程。</font><font style="vertical-align: inherit;">然后重新运行 safe_spawner 脚本。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Gazebo 和 RViz 启动并运行后，请确保在 Gazebo 世界中可以看到以下内容：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">架子</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中一个架子上的蓝色圆柱形目标</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Dropbox 就在机器人旁边</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">12.从新的终端窗口</font><font style="vertical-align: inherit;">运行ROS 节点</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ rosrun kuka_arm IK_server.py</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">13. 并排排列 Gazebo 和 RViz 窗口，然后单击</font><font style="vertical-align: inherit;">RViz 左侧的</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">“下一步”按钮以在状态之间继续。</font></font></strong><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">随着使用“下一步”按钮遍历模拟的不同阶段，RViz 中的状态消息会发生变化。</font><font style="vertical-align: inherit;">在 Gazebo 窗口中观察到驱动情况。</font></font></p>
+<hr>
+<p dir="auto"><a name="user-content-3.0"></a></p>
 
-##### Test Simulator
-The simulator environment can be tested by launching the project in **demo** mode.
-
-10\. Open `inverse_kinematics.launch` file under `/pick-and-place/kuka_arm/launch/` and set the *demo* flag to *"true"*
-
-In addition, the spawn location of the target object can be modified if desired. To do this, modify the **spawn_location** argument in `target_description.launch`under `/pick-and-place/kuka_arm/launch/` where 0-9 are valid values for spawn_location with 0 being random mode.
-
-11\. Launch project by calling the safe_spawner shell script in a fresh terminal
-```sh
-$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-$ ./safe_spawner.sh
-```
-**Note:** If Gazebo and RViz do not launch within a couple of seconds, close all processes started by this shell script by entering `Ctrl+C` in each of the sprung up terminals. Then rerun the safe_spawner script.
-
-Once Gazebo and RViz are up and running, ensure the following can be seen in the gazebo world:
-
-* Robot
-* Shelf
-* Blue cylindrical target in one of the shelves
-* Dropbox right next to the robot
-
-12\. Run the `IK_server` ROS node from a new terminal window 
-
-```sh
-$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-$ rosrun kuka_arm IK_server.py
-```
-
-13\. Arrange Gazebo and RViz windows side-by-side and click on **Next** button on left side of RViz to proceed between states. 
-
-The status message in RViz changes as the different stages of simulation are traversed with the Next button. Actuation is observed in the Gazebo window.
-
-------------
-
-<a name="3.0"></a>
-<!--<div style="text-align:left;">
-<span style="font-size: 1.4em; margin-top: 0.83em; margin-bottom: 0.83em; margin-left: 0; margin-right: 0; font-weight: bold;">3. Theoretical Background</span><span style="float:right;"><a href="#top">Back to Top</a></span>
-</div>-->
-### 3. Theoretical Background
-The following theoretical concepts are used in this project:
-
-* Generalized Coordinates and Degrees of Freedom
-* Common industrial serial manipulators and their workspace
-* Rotation matrices and composition of rotations
-* Euler angles and Euler theorem
-* Homogeneous transforms
-* Denavit–Hartenberg parameters
-* Forward and Inverse Kinematics
-
-#### 3.1 Serial Manipulators
-[Serial manipulators](https://en.wikipedia.org/wiki/Serial_manipulator) are robots composed of an assembly of links connected by joints (a [Kinematic Chain](https://en.wikipedia.org/wiki/Kinematic_chain)), and the most common types of robots in industry.
-
-##### Generalized Coordinates
-Generalized coordinates are parameters that are used to uniquely describe the instantaneous dynamical configuration of a [rigid](https://en.wikipedia.org/wiki/Rigid_body) [multi-body system](https://en.wikipedia.org/wiki/Multibody_system) relative to some reference configuration. In the robotics of serial manipulators, they are used to define the *configuration space* or *joint space*, which refers to the set of all possible configurations a manipulator may have.
-
-##### Degrees of Freedom
-The [degree of freedom (DOF)](https://en.wikipedia.org/wiki/Degrees_of_freedom_(mechanics)) of a rigid body or mechanical system is the number of independent parameters or coordinates that fully define its configuration in free space.
-
-Common DOFs:
-
-* *6*: coordinates required to fully describe the configuration of a rigid body in 3D free space
-* *12*: coordinates required to fully describe simultaneously the configuration of two separate rigid bodies in 3D free space
-* *7*: coordinates required to fully describe the configuration of two rigid bodies in 3D free space connected by a joint
-
-<p align="center">
-<img src="figures/3-theory/workspace_RRR.jpg" alt="" width="73%">
+<h3 tabindex="-1" dir="auto"><a id="user-content-3-theoretical-background" class="anchor" aria-hidden="true" tabindex="-1" href="#3-theoretical-background"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">三、理论背景</font></font></h3>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">本项目使用以下理论概念：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">广义坐标和自由度</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">常见工业串行机械手及其工作空间</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">旋转矩阵和旋转组合</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">欧拉角和欧拉定理</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">齐次变换</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Denavit-Hartenberg 参数</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">正向和反向运动学</font></font></li>
+</ul>
+<h4 tabindex="-1" dir="auto"><a id="user-content-31-serial-manipulators" class="anchor" aria-hidden="true" tabindex="-1" href="#31-serial-manipulators"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.1 串行操纵器</font></font></h4>
+<p dir="auto"><a href="https://en.wikipedia.org/wiki/Serial_manipulator" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">串行机械手是由通过关节（</font></font></a><font style="vertical-align: inherit;"></font><a href="https://en.wikipedia.org/wiki/Kinematic_chain" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">运动链</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）连接的连杆组件组成的机器人</font><font style="vertical-align: inherit;">，是工业中最常见的机器人类型。</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-generalized-coordinates" class="anchor" aria-hidden="true" tabindex="-1" href="#generalized-coordinates"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">广义坐标</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">广义坐标是用于唯一描述</font></font><a href="https://en.wikipedia.org/wiki/Rigid_body" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">刚性</font></font></a> <a href="https://en.wikipedia.org/wiki/Multibody_system" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">多体系统</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">相对于某些参考配置的瞬时动态配置的参数。</font><font style="vertical-align: inherit;">在串行机械臂的机器人技术中，它们用于定义</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">配置空间</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">或</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关节空间</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，它是指机械臂可能具有的所有可能配置的集合。</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-degrees-of-freedom" class="anchor" aria-hidden="true" tabindex="-1" href="#degrees-of-freedom"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">自由程度</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">刚体或机械系统的自由度 (DOF) 是完全定义其在自由空间中的配置的独立参数或坐标的</font><font style="vertical-align: inherit;">数量</font></font><a href="https://en.wikipedia.org/wiki/Degrees_of_freedom_(mechanics)" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></a><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">常见自由度：</font></font></p>
+<ul dir="auto">
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：在 3D 自由空间中完整描述刚体配置所需的坐标</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">12</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：同时完全描述 3D 自由空间中两个独立刚体的配置所需的坐标</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：完整描述通过关节连接的 3D 自由空间中两个刚体的配置所需的坐标</font></font></li>
+</ul>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/workspace_RRR.jpg"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/workspace_RRR.jpg" alt="" width="73%" style="max-width: 100%;"></a>
 <br>
-<sup><b>Fig. 3.1&nbsp;&nbsp;Geometry of a 3-DOF anthropomorphic robot</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图。</font><font style="vertical-align: inherit;">3.1 3-DOF 拟人机器人的几何结构</font></font></b></sup>
 <br>
-<sup>[Source: Narong Aphiratsakun. AIT]</sup>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Narong Aphiratsakun。</font><font style="vertical-align: inherit;">艾特]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.1 所示的串行机械手有 n=3 个关节：每个关节都有 1 个自由度</font></font><a href="https://en.wikipedia.org/wiki/Revolute_joint" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的旋转体</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">每个关节与两个连杆连接，使得连杆总数 n+1 = 4，包括固定的基础连杆。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">因此，任何具有三个</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1-DOF 关节的串行机械手的 DOF 总数</font><font style="vertical-align: inherit;">为：</font></font></p>
+<p dir="auto">&nbsp;<animated-image data-catalyst="" style="width: 5%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/codecogseqn3.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/codecogseqn3.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+      <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
+        <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/3-theory/codecogseqn3.gif" target="_blank">
+          
+        <span data-target="animated-image.imageContainer">
+            <img data-target="animated-image.replacedImage" alt="codecogseqn3.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/3-theory/codecogseqn3.gif" style="display: block; opacity: 1;">
+          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="41" height="7"></canvas></span></a>
+        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play codecogseqn3.gif" hidden=""></button>
+        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
+          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play codecogseqn3.gif">
+            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
+            </path></svg>
+            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
+              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+          <a data-target="animated-image.openButton" aria-label="Open codecogseqn3.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/3-theory/codecogseqn3.gif" target="_blank">
+            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
+            </svg>
+          </a>
+        </span>
+      </span></animated-image></p>
+<p dir="auto"><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：仅具有</font></font></em><font style="vertical-align: inherit;"></font><a href="https://en.wikipedia.org/wiki/Revolute_joint" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">旋转</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和/或</font></font><a href="https://en.wikipedia.org/wiki/Prismatic_joint" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">棱柱</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关节</font><font style="vertical-align: inherit;">的串行机械手的自由度</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">始终</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">等于其关节的数量，除非机械手的两端都是固定的（闭合链连杆）。</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-workspace" class="anchor" aria-hidden="true" tabindex="-1" href="#workspace"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">工作空间</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人操纵器的工作空间</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">被定义为其</font></font><a href="https://en.wikipedia.org/wiki/Robot_end_effector" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">末端执行器</font></font></a> <font style="vertical-align: inherit;"><font style="vertical-align: inherit;">可以到达的点的集合</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[2]</font></font></sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">换句话说，它只是机器人机构工作的 3D 空间。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/scara_anthro_wksp.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/scara_anthro_wksp.png" alt="" width="65%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.2 3-DOF SCARA 和拟人机械臂的工作空间</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Federica.EU]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.2 显示了两种类型的串行机械手：</font></font><a href="https://en.wikipedia.org/wiki/SCARA" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">SCARA</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><a href="https://en.wikipedia.org/wiki/SCARA" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拟人化</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">及其相关工作空间。</font><font style="vertical-align: inherit;">图 3.1 还从顶部和侧面角度显示了 3 自由度操纵器的工作空间。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">值得注意的是，对于工作空间之外任何所需的末端执行器位置，机械手的配置或关节空间不存在运动学解决方案。</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-spherical-wrist" class="anchor" aria-hidden="true" tabindex="-1" href="#spherical-wrist"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">球形手腕</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人操纵器的球形手腕</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">是</font><font style="vertical-align: inherit;">通过布置其最后三个旋转关节来设计的，使得它们的旋转轴相交于公共点，称为手腕</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中心</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/spherical_wrist_def_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/spherical_wrist_def_2.png" alt="" width="67%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.3 球形手腕和非球形手腕之间的差异</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Khaled Elashry，ResearchGate]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.3 显示了球形手腕和非球形手腕之间的差异。</font><font style="vertical-align: inherit;">在3.3(a)中，旋转的关节轴A、B、C都在腕部中心相交，而在3.3(b)中，腕部中心不存在。</font><font style="vertical-align: inherit;">从物理上来说，如图 3.3 所示的六自由度串行机械手将使用前三个关节来控制手腕中心的位置，而最后三个关节（球形手腕）将根据需要定向末端执行器，就像人的手臂一样。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">球形手腕是拟人化机械臂的一个重要设计特征，它简化了其运动学分析，如第 5 节所示。</font></font></p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-32-rotation-of-coordinate-frames" class="anchor" aria-hidden="true" tabindex="-1" href="#32-rotation-of-coordinate-frames"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.2 坐标系的旋转</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">旋转矩阵是用其他坐标系</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表达</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一个坐标系中的向量的一种方法。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_derivation_ab_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_derivation_ab_3.png" alt="" width="68%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.4 坐标系A和B之间的2D几何旋转</font></font></b></sup>
+<br>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在图3.2中，点</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">P</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用相对于坐标</font><em><font style="vertical-align: inherit;">系B的向量</font></em></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">u</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表示</font><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">目标是用</font><font style="vertical-align: inherit;">相对于坐标</font><em><font style="vertical-align: inherit;">系 A 的</font></em><font style="vertical-align: inherit;">向量</font><strong><font style="vertical-align: inherit;">v来表示点</font></strong><strong><font style="vertical-align: inherit;">P</font></strong><font style="vertical-align: inherit;">。</font><strong><font style="vertical-align: inherit;">v</font></strong><font style="vertical-align: inherit;">、</font><strong><font style="vertical-align: inherit;">v </font></strong><strong><sub><font style="vertical-align: inherit;">x</font></sub></strong><font style="vertical-align: inherit;">和</font><strong><font style="vertical-align: inherit;">v </font></strong><strong><sub><font style="vertical-align: inherit;">y</font></sub></strong><font style="vertical-align: inherit;">的基向量</font><font style="vertical-align: inherit;">可以用</font><strong><font style="vertical-align: inherit;">u</font></strong><font style="vertical-align: inherit;">、</font><strong><font style="vertical-align: inherit;">u </font></strong><strong><sub><font style="vertical-align: inherit;">x</font></sub></strong><font style="vertical-align: inherit;">和</font><strong><font style="vertical-align: inherit;">u </font></strong><strong><sub><font style="vertical-align: inherit;">y</font></sub></strong><font style="vertical-align: inherit;">的基向量表示  如下：</font></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub></strong><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_deriv_1.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_deriv_1.png" alt="" width="32%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中，帧 A</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">a </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x</font></font></sub></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">a </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">y</font></font></sub></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的单位向量</font><font style="vertical-align: inherit;">用</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">帧 B</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">b </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x</font></font></sub></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">b </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">y</font></font></sub></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的单位向量表示，如下所示：</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_deriv_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_deriv_2.png" alt="" width="32%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将 (2) 代入 (1) 并求解点积，得到以下方程：</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_deriv_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_deriv_3.png" alt="" width="32%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中右侧第一项是</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2D 旋转矩阵</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，在本例中表示为</font></font><strong><i><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">a </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">b</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R</font></font></i></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">坐标系 B上</font></font></em><font style="vertical-align: inherit;"><i><sub><font style="vertical-align: inherit;">的</font></sub></i><font style="vertical-align: inherit;">任何点</font><font style="vertical-align: inherit;">乘以</font></font><i><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">b</font></font></sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R</font></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></i><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">都会将其投影到</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">坐标系 A</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">上。</font><font style="vertical-align: inherit;">换句话说，为了将</font><font style="vertical-align: inherit;">某个</font><em><font style="vertical-align: inherit;">帧 B上的向量</font></em></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">u</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表示为不同</font><em><font style="vertical-align: inherit;">帧 A</font></em><font style="vertical-align: inherit;">上的向量</font><strong><font style="vertical-align: inherit;">v</font></strong><font style="vertical-align: inherit;">，</font><strong><font style="vertical-align: inherit;">u</font></strong><font style="vertical-align: inherit;">乘以</font><em><font style="vertical-align: inherit;">帧 A从</font></em><em><font style="vertical-align: inherit;">帧 B</font></em><font style="vertical-align: inherit;">旋转的角度 theta 的旋转矩阵</font><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">另外值得注意的是，从 A 到 B 的旋转等于</font><font style="vertical-align: inherit;">B 到 A 的旋转的转</font><em><font style="vertical-align: inherit;">置。</font></em></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font></p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-33-euler-angles" class="anchor" aria-hidden="true" tabindex="-1" href="#33-euler-angles"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.3 欧拉角</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">欧拉角是描述旋转序列或组合的系统。</font><font style="vertical-align: inherit;">根据</font></font><a href="https://en.wikipedia.org/wiki/Euler%27s_rotation_theorem" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">欧拉旋转定理，任何</font></font></a><font style="vertical-align: inherit;"></font><a href="https://en.wikipedia.org/wiki/Rigid_body" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">刚体</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">相对于某个固定参考系的方向</font><font style="vertical-align: inherit;">始终可以通过给定</font><strong><font style="vertical-align: inherit;">顺序的</font></strong></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">三个</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">基本旋转来描述</font><font style="vertical-align: inherit;">，如图 3.3 所示。</font></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/Inertial-Frame.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/Inertial-Frame.png" alt="" width="52%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.5 根据旋转序列定义欧拉角</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：CHRobotics]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">传统上，围绕三个旋转轴的运动及其相关角度由图 3.4 中的 3D 旋转矩阵描述。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/euler_rotation_matrices_c.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/euler_rotation_matrices_c.png" alt="" width="85%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.6 描述偏航、俯仰和滚转的 3D 逆时针旋转矩阵</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">欧拉角具有以下性质：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">泰特-布莱恩 vs. 经典</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">轮换顺序</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">内在（身体固定）与外在（固定轴）旋转</font></font></li>
+</ul>
+<p dir="auto"><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">围绕</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">先前旋转所旋转的</font><font style="vertical-align: inherit;">坐标系执行</font><strong><font style="vertical-align: inherit;">固有旋转或身体固定旋转。</font></strong><font style="vertical-align: inherit;">每次基本旋转后，旋转顺序都会改变轴方向，而主体保持固定。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/in_rot_matrices.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/in_rot_matrices.png" alt="" width="62%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在旋转的内在序列中，例如偏航的 ZYX 惯例，随后是俯仰，随后是滚动，后续的元素旋转是</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">后乘的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">外部</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">或固定轴旋转是&ZeroWidthSpace;&ZeroWidthSpace;围绕</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">固定</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">世界参考系执行的。</font><font style="vertical-align: inherit;">当身体改变方向时，原始坐标系保持静止。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/ex_rot_matrices.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/ex_rot_matrices.png" alt="" width="62%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在外部旋转序列中，例如偏航的 ZYX 惯例，随后是俯仰，随后是滚转，后续的基本旋转被</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">预乘</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注：</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> A、B、C 的外在旋转序列 = C、B、A 的内在旋转序列。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">欧拉角（通常在</font></font><a href="https://commons.wikimedia.org/wiki/Tait-Bryan_angles" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Tait-Bryan</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ZXY</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">约定中）也用于机器人技术中，用于描述机器人操纵器的球形手腕的自由度。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">特别重要的是一种与欧拉角相关的现象，称为万向节</font></font><a href="https://en.wikipedia.org/wiki/Gimbal_lock" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">锁定</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，当由于三个</font></font><a href="https://en.wikipedia.org/wiki/Gimbal" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">万向节</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中的两个轴被驱动成平行配置而失去一个自由度时，就会发生这种现象。</font></font></p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-34-homogeneous-transforms" class="anchor" aria-hidden="true" tabindex="-1" href="#34-homogeneous-transforms"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.4 齐次变换</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在参考系相对于某个其他参考系同时旋转</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">平移（变换）的情况下，</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">齐次变换矩阵</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">描述该变换。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/homo_tf_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/homo_tf_2.png" alt="" width="44%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.7 框架 B 相对于框架 A 的旋转和平移</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Salman Hashmi。</font><font style="vertical-align: inherit;">BSD 许可证]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在图 3.7 中，点 P 用坐标系 B 表示，目标是用坐标系 A 表示。这样做需要将坐标系 B 投影或叠加到坐标系 A 上，即首先旋转坐标系 B 以使其与坐标系 A 一起定向，然后平移它使得两个帧的中心B </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和A </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对齐。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/homog_transform_eqns.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/homog_transform_eqns.png" alt="" width="52%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.7中三个向量之间的关系如式(1)所示。</font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">从 A 0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">到点 P 的所需矢量是从 B </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">到点 P 旋转到坐标系 A 的矢量</font><font style="vertical-align: inherit;">与相对于 A </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">到B </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的平移矢量之和。</font><font style="vertical-align: inherit;">方程（2）和（3）是方程（1）的矩阵形式，因此可以用线性代数库在软件中呈现。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/homog_tf_2_exp.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/homog_tf_2_exp.png" alt="" width="55%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.8 齐次变换关系剖析</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.8 描述了方程 (2) 的组成部分。</font><font style="vertical-align: inherit;">通过将给定的到点 P (wrt B </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 ) 的向量乘以</font></font></sub><font style="vertical-align: inherit;"><em><font style="vertical-align: inherit;">齐次变换</font></em><font style="vertical-align: inherit;">矩阵来获得到点 P (wrt 到 A </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> ) 的所需向量</font><font style="vertical-align: inherit;">，齐次变换矩阵由将 B 投影到 A 上的块旋转矩阵和到 B 的块平移向量组成关于 A </font><sub><font style="vertical-align: inherit;">0</font></sub><font style="vertical-align: inherit;">。</font></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/robo_arm_w.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/robo_arm_w.png" alt="" width="43%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.9 相邻旋转关节框架之间的变换</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图 3.9 所示，末端执行器的位置通过</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">坐标参考系</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">C</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">可知。</font><font style="vertical-align: inherit;">目的是用</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">固定的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">世界坐标参考系</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">W</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">来表达它。</font><font style="vertical-align: inherit;">这是因为操纵器环境中所有感兴趣对象的位置都是用世界参考系表示的。</font><font style="vertical-align: inherit;">在其他世界中，末端执行器</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">及其</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">交互的对象都需要在</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">同一</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">坐标参考系上定义。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过在相邻关节之间连续应用方程（4）可以找到</font><font style="vertical-align: inherit;">相对于框架</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">W的点P：</font></font></em><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/robo_arm_sol_complete_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/robo_arm_sol_complete_2.png" alt="" width="84%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">上述过程可以用等式（1）来概括，其中</font></font><em><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">W </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">C</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> T是将</font></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">帧 C</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">投影到</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">帧 W</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">上的所需复合齐次变换</font><font style="vertical-align: inherit;">。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/robo_arm_sol_summary_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/robo_arm_sol_summary_3.png" alt="" width="21%" style="max-width: 100%;"></a>
+</p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-35-denavithartenberg-parameters" class="anchor" aria-hidden="true" tabindex="-1" href="#35-denavithartenberg-parameters"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.5 Denavit-Hartenberg 参数</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在计算相邻链接之间的齐次变换之前，必须定义应用变换的关节链接的坐标系。</font><font style="vertical-align: inherit;">Denavit </font></font><a href="https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">–Hartenberg (DH) 参数</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">是描述相邻链接之间的旋转和平移的四个参数。</font><font style="vertical-align: inherit;">这些参数的定义构成了为机器人操纵器的连杆分配坐标参考系的约定。</font><font style="vertical-align: inherit;">图 3.8 显示了[Craig, JJ. 定义的 DH 参数的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">修改</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">约定。</font><font style="vertical-align: inherit;">（2005）]。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/mod_dh_params_labeled_4.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/mod_dh_params_labeled_4.png" alt="" width="65%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.8 Modified DH约定的四个参数</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：修改自Wikipedia Commons]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">参数定义如下：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">α </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1 ：连杆</font></font></sub><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的 z 轴之间的扭转角</font><font style="vertical-align: inherit;">（以</font><font style="vertical-align: inherit;">右手方向绕</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1测量）</font></font></sub></em><font style="vertical-align: inherit;"></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ɑ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1 : 链接</font></font></sub><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的 z 轴之间的链接距离</font><font style="vertical-align: inherit;">  （测量</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></sub></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">d </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i ：链接</font></font></sub><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的 x 轴之间的链接偏移有符号距离  </font><font style="vertical-align: inherit;">  （沿</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测量）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i ：连杆</font></font></sub><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的 x 轴之间的关节角度  </font><font style="vertical-align: inherit;">（</font><font style="vertical-align: inherit;">以右手方向围绕</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i测量）</font></font></sub></em><font style="vertical-align: inherit;"></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">笔记：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">框架</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i的原点由</font></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font><em><font style="vertical-align: inherit;">z </font></em><em><sub><font style="vertical-align: inherit;">i</font></sub></em><font style="vertical-align: inherit;">的交集定义</font></font><em><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub></em></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">x 轴定义</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></sub></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i之间的公共法线</font></font></sub></em></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">回想一下，为了计算末端执行器相对于基础或世界参考系的位置，相邻链接之间的变换组成如下：</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/dh_eq_1.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/dh_eq_1.png" alt="" width="55%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中基础坐标系用0</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表示</font><font style="vertical-align: inherit;">，末端执行器的坐标系用</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">N</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表示。</font><font style="vertical-align: inherit;">因此，   </font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">N T 定义了将帧</font></font></sub><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">N</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">投影到帧</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的齐次变换</font><font style="vertical-align: inherit;">。</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">更具体地说，链路i-1</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间的单个变换</font><font style="vertical-align: inherit;">由下式给出</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/dh_eq_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/dh_eq_2.png" alt="" width="55%" style="max-width: 100%;"></a>
+</p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/dh_eq_3_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/dh_eq_3_v2.png" alt="" width="55%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">由两个大小为 α 和 θ 的旋转R</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以及两个大小为 ɑ 和 d 的位移</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">D</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">组成</font><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">n个自由度（即关节）的开放运动链的参数赋值过程总结为：</font></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">标记 {1, 2, … , n} 中的所有关节。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将从固定基本链接开始的 {0, 1, …, n} 中的所有链接标记为 0。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">绘制穿过所有关节的线，定义关节轴。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将每个框架的 Z 轴指定为沿其关节轴指向。</font></font></li>
+<li><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">识别每帧Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和  </font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Z </font></font></em><font style="vertical-align: inherit;"><sub><font style="vertical-align: inherit;">i</font></sub><font style="vertical-align: inherit;">之间的公共法线</font></font><sub><font style="vertical-align: inherit;"></font></sub></li>
+<li><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中间连杆</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的端点</font><font style="vertical-align: inherit;">（即，不是基础连杆或末端执行器）与两个关节轴{i}和{i+1}相关联。</font><font style="vertical-align: inherit;">对于从 1 到 n-1 的 i，将</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">X </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">指定为...
+</font></font><ol dir="auto">
+<li><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对于斜轴，沿着Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i+1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间的法线</font><font style="vertical-align: inherit;">并从 {i} 指向 {i+1}。</font></font></li>
+<li><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对于相交轴，垂直于包含Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i+1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的平面</font><font style="vertical-align: inherit;">。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对于平行或重合的轴，分配是任意的；</font><font style="vertical-align: inherit;">寻找使其他 DH 参数等于 0 的方法。</font></font></li>
+</ol>
+</li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对于基础链接，当第一个关节变量（θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">
+&ZeroWidthSpace;&ZeroWidthSpace; 或 d </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）等于 0 时，始终选择与帧 {1} 重合的帧 {0}。</font><font style="vertical-align: inherit;">这将保证 α </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> = a </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> = 0，并且如果关节 1 是旋转关节，则 d </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> = 0。如果关节 1 是棱柱关节，则 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> = 0。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对于末端执行器框架，如果关节 n 是旋转的，</font><font style="vertical-align: inherit;">
+当 θ </font><sub><font style="vertical-align: inherit;">n</font></sub><font style="vertical-align: inherit;">&ZeroWidthSpace; = 0 且框架 {n} 的原点使得 d </font><sub><font style="vertical-align: inherit;">n = 0 时，选择</font></sub></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">X </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">n</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">位于</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">X </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">n−1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">&ZeroWidthSpace;&ZeroWidthSpace; 的方向。</font></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></li>
+</ol>
+<p dir="auto"><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">涉及Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">轴的特殊情况</font><font style="vertical-align: inherit;">：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">共线：alpha = 0 且 a = 0</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">平行线： alpha = 0 且 a ≠ 0</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">相交线：alpha ≠ 0 且 a = 0</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如果公共法线与</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Z </font></font></em><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">相交于第 i 帧的原点，则 d</font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">&ZeroWidthSpace; i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为零。</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一旦完成帧分配，DH 参数通常以表格形式呈现（如下）。</font><font style="vertical-align: inherit;">表中的每一行对应于从帧{i}到帧{i+1}的齐次变换。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/mod_dh_table_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/mod_dh_table_2.png" alt="" width="58%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表3.1 修改后的DH约定的四个参数</font></font></b></sup>
+</p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-36-forward-and-inverse-kinematics" class="anchor" aria-hidden="true" tabindex="-1" href="#36-forward-and-inverse-kinematics"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3.6 正向和反向运动学</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">正向运动学是根据给定的关节角度计算机械手在笛卡尔坐标中的末端执行器位置的过程。</font><font style="vertical-align: inherit;">这可以通过齐次变换的组合来实现，这些变换将基础框架映射到末端执行器的框架上，以关节角度作为输入。</font><font style="vertical-align: inherit;">然后可以从生成的复合变换矩阵中提取末端执行器的坐标。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">正运动学和逆运动学之间的关系如图 3.9 所示，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/fk_ik_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/fk_ik_3.png" alt="" width="43%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.9 正向和反向运动学之间的关系</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆运动学是逆过程，其中 EE 位置已知，并且需要确定导致该位置的一组关节角度。</font><font style="vertical-align: inherit;">这是一个比 FK 更复杂的过程，因为同一 EE 职位可能存在多种解决方案。</font><font style="vertical-align: inherit;">然而，对于机械臂工作空间之外的任何 EE 位置，不存在关节角度解。</font><font style="vertical-align: inherit;">解决 IK 问题有两种主要方法：数值方法和解析方法。</font><font style="vertical-align: inherit;">本项目采用的是后一种方法。</font></font></p>
+
+<hr>
+<p dir="auto"><a name="user-content-4.0"></a></p>
+
+<h3 tabindex="-1" dir="auto"><a id="user-content-4-design-requirements" class="anchor" aria-hidden="true" tabindex="-1" href="#4-design-requirements"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">四、设计要求</font></font></h3>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">设计范围仅限于包含以下步骤的单个拾取和放置周期：</font></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 向目标物体移动</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">抓住/拾取目标物体</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">向投放点移动</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将物体投放/放置在投放地点</font></font></li>
+</ol>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 4.1 显示了 Gazebo 中的这些步骤。</font></font></p>
+<p align="center" dir="auto">
+<animated-image data-catalyst="" style="width: 53%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/4-requirements/gazebo-req-2.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/4-requirements/gazebo-req-2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+      <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
+        <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/4-requirements/gazebo-req-2.gif" target="_blank">
+          
+        <span data-target="animated-image.imageContainer">
+            <img data-target="animated-image.replacedImage" alt="gazebo-req-2.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/4-requirements/gazebo-req-2.gif" style="display: block; opacity: 1;">
+          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="431" height="243"></canvas></span></a>
+        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play gazebo-req-2.gif" hidden=""></button>
+        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
+          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play gazebo-req-2.gif">
+            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
+            </path></svg>
+            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
+              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+          <a data-target="animated-image.openButton" aria-label="Open gazebo-req-2.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/4-requirements/gazebo-req-2.gif" target="_blank">
+            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
+            </svg>
+          </a>
+        </span>
+      </span></animated-image>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 4.1 单个拾放周期</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Gazebo]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">感兴趣的主要指标是：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">总共 10 次拾放周期的成功百分比</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">与 IK 服务请求中收到的 EE 位置相比，计算出的 EE 位置轨迹（通过 FK）存在误差</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">执行完整的拾放周期所需的时间</font></font></li>
+</ul>
+<p align="center" dir="auto">
+<animated-image data-catalyst="" style="width: 53%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/4-requirements/moveit_demo_v3.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/4-requirements/moveit_demo_v3.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+      <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
+        <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/4-requirements/moveit_demo_v3.gif" target="_blank">
+          
+        <span data-target="animated-image.imageContainer">
+            <img data-target="animated-image.replacedImage" alt="moveit_demo_v3.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/4-requirements/moveit_demo_v3.gif" style="display: block; opacity: 1;">
+          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="431" height="312"></canvas></span></a>
+        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play moveit_demo_v3.gif" hidden=""></button>
+        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
+          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play moveit_demo_v3.gif">
+            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
+            </path></svg>
+            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
+              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+          <a data-target="animated-image.openButton" aria-label="Open moveit_demo_v3.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/4-requirements/moveit_demo_v3.gif" target="_blank">
+            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
+            </svg>
+          </a>
+        </span>
+      </span></animated-image>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 4.2 到下车地点的计划 EE 轨迹</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：RViz、MoveIt!]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表 4.1 显示了项目评估的标准，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/4-requirements/eval_criteria_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/4-requirements/eval_criteria_v2.png" alt="" width="75%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表4.1 项目评价标准</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">最低标准是实现至少</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">80%</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的成功率，且 EE 轨迹误差不大于</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0.5</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<hr>
+<p dir="auto"><a name="user-content-5.0"></a></p>
+
+<h3 tabindex="-1" dir="auto"><a id="user-content-5-design-implementation" class="anchor" aria-hidden="true" tabindex="-1" href="#5-design-implementation"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5. 设计实现</font></font></h3>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为了执行单个拾取和放置操作，需要确定与目标物体的给定位置和投放地点相对应的关节角度。</font><font style="vertical-align: inherit;">为了实现这一目标，使用 ROS 和 Python 在软件中执行和实现了逆运动学分析。</font></font></p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-51-kinematic-analysis" class="anchor" aria-hidden="true" tabindex="-1" href="#51-kinematic-analysis"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5.1 运动学分析</font></font></h4>
+<h5 tabindex="-1" dir="auto"><a id="user-content-dh-parameters" class="anchor" aria-hidden="true" tabindex="-1" href="#dh-parameters"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">DH参数</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 5.1 (a) 显示了 Kuka KR210 串行机械手，(b) 显示了其</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">零配置</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">示意图，指示了其 DH 参数。</font><font style="vertical-align: inherit;">在</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">零配置</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中，所有关节角度均假定为零。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/kr210_arch_5.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/kr210_arch_5.png" alt="" width="80%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 5.1 KUKA KR210 六自由度机器人机械臂及其示意性架构</font></font></b></sup>
+<br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：(a) KUKA Roboter GmbH，(b) Salman Hashmi，BSD 许可证]</font></font></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请注意，对于关节 2，x 1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间存在恒定的 -90 度偏移</font><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">执行以下步骤来构建 KR210 原理图并导出其 DH 表：</font></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">标记从 1 到 n = 6 的关节</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将每个链接标记为从 0 到 n = 6</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将 z 轴定义为关节轴（关节 2、3 和 5 均平行，关节 4 和 6 重合）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将 x 轴定义为公共法线</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">定义每个关节的参考系原点</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将 x 轴定义为 z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i之间的公共法线</font></font></sub></li>
+<li><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将坐标系 {i} 的原点定义为 x i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">与 z </font><sub><font style="vertical-align: inherit;">i</font></sub><font style="vertical-align: inherit;">的交集</font></font><sub><font style="vertical-align: inherit;"></font></sub></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为夹具或 EE 添加一个刚性连接到连杆 6 的固定框架（注意：EE 参考系 O </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE与 O </font></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">4</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、 O </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、 O </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的连杆 6 参考系的不同之处仅在于沿 z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的平移</font><font style="vertical-align: inherit;">）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">标记所有非零 DH 参数</font></font></li>
+</ol>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">最后一步是使用表 5.1 实现的，该表是根据 KR210 URDF 文件构建的</font></font><code>kr210.urdf.xacro</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/urdf_table.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/urdf_table.png" alt="" width="85%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表 5.1 KR210 URDF 文件中关节 {i} 相对于其父关节 {i-1} 的位置</font></font></b></sup>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请注意以下有关 URDF 文件和表 5.1 的内容，</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">RViz 不直接显示关节参考系，而是显示链接参考系</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在 URDF 文件中，每个关节是相对于其父关节的中心（非原点）定义的，例如第 2 行显示关节 2 相对于关节 1 的中心（非原点）的位置</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表5.1中的base_link在图5.1(b)中描绘为link0(l0)</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">然后从图 5.1 (b) 和表 5.1 导出 DH 表，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/DH_Table.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/DH_Table.png" alt="" width="45%" style="max-width: 100%;"></a>
+<br>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表 5.2 KR210 修改后的 DH 表</font></font></b></sup>
+</p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-inverse-kinematic-solution-approach" class="anchor" aria-hidden="true" tabindex="-1" href="#inverse-kinematic-solution-approach"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆运动学求解方法</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">解析</font><font style="vertical-align: inherit;">或</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">闭式</font></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">方法</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于执行逆运动学。</font><font style="vertical-align: inherit;">这种方法有两个优点：</font></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">与数值方法相比，求解速度更快</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">更容易制定适合解决方案的规则</font></font></li>
+</ol>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">此外，所使用的机器人操纵器的类型（拟人化）满足该方法的适用条件：</font></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3个相邻关节的旋转轴应相交于一点（通过球形手腕设计满足）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3 个相邻关节的旋转轴是平行的（1. 的特殊情况，因为平行线相交于无穷远）</font></font></li>
+</ol>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为了清楚起见，此处再次显示了第 3 节中相邻链接之间的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">4 x 4</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">齐次变换：</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/dh_eq_3_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/dh_eq_3_v2.png" alt="" width="47%" style="max-width: 100%;"></a>
 </p>
 
-The serial manipulator shown in figure 3.1  has n=3 joints: each a [revolute](https://en.wikipedia.org/wiki/Revolute_joint) with 1-DOF. Each joint connects with two links, making the total number of links, n+1 = 4, including the fixed base link.
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">值得注意的是，必须求解 12 个联立非线性方程，每个方程对应基础链路和末端执行器之间整体齐次变换的前 3 行中的每一项。</font><font style="vertical-align: inherit;">因此，为了简化解决方案，利用球形手腕设计来解耦</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">末端</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">执行器的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">位置</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font><font style="vertical-align: inherit;">方向</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，从而将原始问题简化为两个可以独立解决的更简单的问题：</font></font></em><font style="vertical-align: inherit;"></font></p>
+<ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">找到 WC 的位置（笛卡尔坐标）并以几何方式计算物理控制它的关节角度 1、2、3</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">找到定向 EE 的 xyz 旋转 (r, p, y) 的合成并解析求解其欧拉角：关节角 4, 5, 6</font></font></li>
+</ol>
 
-Therefore, the total number of DOF for any serial manipulator with *three* 1-DOF joints is:
-
-&nbsp;<img src="figures/3-theory/codecogseqn3.gif" alt="" width="5%">
-
-*Note:* The DOF of a serial manipulator with only [revolute](https://en.wikipedia.org/wiki/Revolute_joint) and/or [prismatic](https://en.wikipedia.org/wiki/Prismatic_joint) joints is *always* equal to the number of its joints, except when both ends of the manipulator are fixed (closed chain linkage).
-
-##### Workspace
-The *workspace* of a robotic manipulator is defined as the set of points that can be reached by its [end-effector](https://en.wikipedia.org/wiki/Robot_end_effector) <sup>[2]</sup>. In other words, it is simply the 3D space in which the robot mechanism works.
-
-<p align="center">
-<img src="figures/3-theory/scara_anthro_wksp.png" alt="" width="65%">
+<h5 tabindex="-1" dir="auto"><a id="user-content-inverse-position-kinematics" class="anchor" aria-hidden="true" tabindex="-1" href="#inverse-position-kinematics"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆位置运动学</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如前所述，关节 1、2 和 3 控制由</font><font style="vertical-align: inherit;">关节 4、5 和 6 组成的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">球形手腕的位置。在逆向运动学的</font></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">位置</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">部分中，关节角度 1、2 和 3 是根据以下几何计算的：球形手腕中心 (WC) 的位置。</font><font style="vertical-align: inherit;">该位置由末端执行器位置 (EE) 确定，如图 5.2 所示。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/wc_1_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/wc_1_v2.png" alt="" width="46%" style="max-width: 100%;"></a>
 <br>
-<sup><b>Fig. 3.2&nbsp;&nbsp;&nbsp;Workspaces of 3-DOF SCARA and anthropomorphic manipulators</b></sup>
-<br>
-<sup>[Source: Federica.EU]</sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 5.2 求 WC 相对于基架</font></font><i><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">O的位置</font></font></i></b></sup>
 </p>
-
-Figure 3.2 shows two types of serial manipulators, [SCARA](https://en.wikipedia.org/wiki/SCARA) and [Anthropomorphic](https://en.wikipedia.org/wiki/SCARA) with their associated workspaces. Figure 3.1 also shows the workspace of the 3-DOF manipulator from a top and side perspective. 
-
-It is important to note that no kinematic solution exists for the manipulator's configuration or joint space for any desired end-effector position outside of the workspace.
-
-##### Spherical Wrist
-A *spherical wrist* of a robotic manipulator is designed by arranging its last three revolute joints such that their axes of rotations intersect at a common point, referred to as the *wrist center*.
-
-<p align="center">
-<img src="figures/3-theory/spherical_wrist_def_2.png" alt="" width="67%">
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">WC wrt 到 EE 的位置向量 ( </font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">r </font></font></strong><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">WC/EE </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">O</font></font></sub></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> ) 是沿 z EE</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的简单平移</font><font style="vertical-align: inherit;">。</font><sup><font style="vertical-align: inherit;">通过使用由旋转矩阵0 </font></sup><sub><font style="vertical-align: inherit;">EE</font></sub><font style="vertical-align: inherit;"> R 和从 O 到 EE 的平移向量</font><font style="vertical-align: inherit;">组成的齐次变换将</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">r </font></font></strong><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">WC/EE </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">O</font></font></sub></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">变换到基础框架 O 上，可以找到 WC 相对于基础框架 O 的所需位置向量，</font></font><sup><font style="vertical-align: inherit;"></font></sup><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/wc_calc_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/wc_calc_v2.png" alt="" width="62%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中 d </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE由 DH 表 5.2 中的 d </font></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">给出</font><font style="vertical-align: inherit;">，旋转矩阵的第 3 列向量描述 EE 相对于基架 O 的 z 轴。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一旦已知 WC 的笛卡尔坐标，</font><font style="vertical-align: inherit;">就可以使用</font><font style="vertical-align: inherit;">边位于关节 2、3 和 5 处的</font><a href="https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html" rel="nofollow"><font style="vertical-align: inherit;">SSS</font></a><font style="vertical-align: inherit;">三角形上的</font><a href="https://en.wikipedia.org/wiki/Law_of_cosines" rel="nofollow"><font style="vertical-align: inherit;">余弦定理计算 θ </font></a></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2 ，如图 5.3 所示。</font></font></sub><font style="vertical-align: inherit;"></font><a href="https://en.wikipedia.org/wiki/Law_of_cosines" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/thetas_1_2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/thetas_1_2.png" alt="" width="47%" style="max-width: 100%;"></a>
 <br>
-<sup><b>Fig. 3.3&nbsp;&nbsp;Difference between a spherical and non-spherical wrist</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 5.3</font><font style="vertical-align: inherit;">使用 SSS 三角形计算 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"></font></b></sup>
+</p>
+<p dir="auto"><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注：</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关节角度定义为相邻x 轴之间绕z 的旋转，例如关节角度θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3是x </font></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间关于z </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的角度</font><font style="vertical-align: inherit;">（未显示）。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">是围绕 z </font><sub><font style="vertical-align: inherit;">1测量的 x </font></sub></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间的关节 1 角度</font><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">它是使用 WC 相对于基础框架的 x 和 y 坐标计算的，</font></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/theta1_eqn.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/theta1_eqn.png" alt="" width="16%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">是围绕 z </font><sub><font style="vertical-align: inherit;">2测量的 x </font></sub></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间的关节 2 角度</font><font style="vertical-align: inherit;">。</font><sub><font style="vertical-align: inherit;">请注意，对于关节 2，x 1</font></sub><font style="vertical-align: inherit;">和 x </font><sub><font style="vertical-align: inherit;">2</font></sub><font style="vertical-align: inherit;">之间存在恒定的 -90 度偏移，</font><font style="vertical-align: inherit;">如图 5.1 (b) 和 DH 表 5.2（i = 2）所示，</font></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/theta2_eqn_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/theta2_eqn_v2.png" alt="" width="24%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中 W 由下式给出，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/W_eqn.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/W_eqn.png" alt="" width="19%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">A 由余弦定理确定。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">是围绕 z </font><sub><font style="vertical-align: inherit;">3测量的 x </font></sub></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 x </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之间的关节 3 角度</font><font style="vertical-align: inherit;">。</font><font style="vertical-align: inherit;">图 5.4 (b) 用于计算 θ </font><sub><font style="vertical-align: inherit;">3</font></sub><font style="vertical-align: inherit;">，其中 5.4 (a) 用于比较，以帮助可视化关节 3 和 5 之间的连接中的下垂。</font></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/theta3_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/theta3_v2.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
-<sup>[Source: Khaled Elashry, ResearchGate]</sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 5.4 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的计算并考虑 j3 和 j5 之间链路的下垂</font></font></b></sup>
 </p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图 5.4 (b) </font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Final</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">所示，θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">由下式给出：</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/theta3_eqn.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/theta3_eqn.png" alt="" width="25%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">垂角在哪里，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/sag_eqn.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/sag_eqn.png" alt="" width="16%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">B 由余弦定理确定。</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-inverse-orientation-kinematics" class="anchor" aria-hidden="true" tabindex="-1" href="#inverse-orientation-kinematics"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆向运动学</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">回想一下，关节 4、5 和 6 构成了球形手腕设计，其中关节 5 是手腕中心 (WC)。</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">逆运动学定向</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">部分</font><font style="vertical-align: inherit;">，关节角度4、5、6由</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R解析计算；</font><font style="vertical-align: inherit;">WC 定向的 xyz 旋转（滚动、俯仰、偏航）的组合。</font><font style="vertical-align: inherit;">因此，关节角 4、5 和 6 是该旋转组合的欧拉角。</font></font></p>
+<p dir="auto"><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6 R 可由</font></font></sub><font style="vertical-align: inherit;"></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R确定</font><font style="vertical-align: inherit;">如下，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/R3_6_calc_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/R3_6_calc_v2.png" alt="" width="32%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i R 是齐次变换</font></font></sub><font style="vertical-align: inherit;"></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i-1 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">i</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> T</font><font style="vertical-align: inherit;">的复合旋转矩阵，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/homog_rotation.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/homog_rotation.png" alt="" width="39%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R 由下</font><font style="vertical-align: inherit;">式给出，</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/R0_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/R0_3.png" alt="" width="18.3%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">由于关节角度 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">已经计算出来，因此</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R 不再是变量，因为 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">可以简单地替换为</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">0 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R、</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">1 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R 和分别为</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">2 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R，留下 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">4</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6作为</font></font></sub><font style="vertical-align: inherit;"></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> R</font><font style="vertical-align: inherit;">中唯一的变量。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">象征性地评估</font><font style="vertical-align: inherit;">sympy 中的</font></font><sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">3 </font></font></sup><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6 R 产量，</font></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/R3_6.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/R3_6.png" alt="" width="100%" style="max-width: 100%;"></a>
+</p>
+<p dir="auto"><font style="vertical-align: inherit;"><sup><font style="vertical-align: inherit;">然后可以根据3 </font></sup><sub><font style="vertical-align: inherit;">6</font></sub><font style="vertical-align: inherit;"> R</font><font style="vertical-align: inherit;">分析确定</font><font style="vertical-align: inherit;">关节角度 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">4</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5</font></font></sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和 θ </font></font><sub><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6 ，</font></font></sub><font style="vertical-align: inherit;"></font><sup><font style="vertical-align: inherit;"></font></sup><sub><font style="vertical-align: inherit;"></font></sub><font style="vertical-align: inherit;"></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/5-implementation/thetas_4_5_6_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/5-implementation/thetas_4_5_6_v2.png" alt="" width="52%" style="max-width: 100%;"></a>
+</p>
+<h4 tabindex="-1" dir="auto"><a id="user-content-52-software-implementation" class="anchor" aria-hidden="true" tabindex="-1" href="#52-software-implementation"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5.2 软件实现</font></font></h4>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目的主要代码位于</font></font><a href="http://wiki.ros.org/ROS/Tutorials/UnderstandingNodes" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS节点</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、</font><a href="http://wiki.ros.org/Packages" rel="nofollow"><font style="vertical-align: inherit;">ROS包</font></a></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中</font><font style="vertical-align: inherit;">，KR210在由</font><a href="http://gazebosim.org/" rel="nofollow"><font style="vertical-align: inherit;">Gazebo</font></a><font style="vertical-align: inherit;">、</font><a href="http://wiki.ros.org/rviz" rel="nofollow"><font style="vertical-align: inherit;">RViz</font></a><font style="vertical-align: inherit;">和</font><a href="http://moveit.ros.org/" rel="nofollow"><font style="vertical-align: inherit;">MoveIt组成的基于ROS的模拟器环境中运行！</font></a><font style="vertical-align: inherit;">。</font></font><code>kuka_arm</code> <a href="http://wiki.ros.org/Packages" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="http://gazebosim.org/" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="http://wiki.ros.org/rviz" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="http://moveit.ros.org/" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该</font></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">节点从 KR210 模拟器接收末端执行器（夹具）姿势并执行逆运动学，通过计算出的关节变量值（本例中为关节角度）向模拟器提供响应。</font><font style="vertical-align: inherit;">5.1 节中进行的 IK 分析是</font></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用</font></font><a href="http://www.sympy.org/en/index.html" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Sympy</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><a href="http://www.numpy.org/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Numpy</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">库在节点中实现的。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以下是有关此实施的精选注意事项：</font></font></p>
+<ul dir="auto">
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">所有 python 代码都尽可能</font><font style="vertical-align: inherit;">符合</font></font><a href="https://www.python.org/dev/peps/pep-0008/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">PEP 8 ，偶尔会有偏差，以适应 Sympy 和 Numpy 矩阵符号，并提高可读性。</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">同样，函数文档字符串也符合</font></font><a href="https://www.python.org/dev/peps/pep-0257/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">PEP 257</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">约定。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">KR210 的 DH 表是根据ROS 包</font></font><code>kr210.urdf.xacro</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中的文件构建的</font></font><code>kuka_arm</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用 ROS</font><a href="https://github.com/ros/geometry/blob/indigo-devel/tf/src/tf/transformations.py#L1089"><font style="vertical-align: inherit;">几何转换模块，</font></a><font style="vertical-align: inherit;">将夹具或 EE 方向</font><font style="vertical-align: inherit;">从</font><font style="vertical-align: inherit;">IK</font><a href="http://wiki.ros.org/Services" rel="nofollow"><font style="vertical-align: inherit;">服务请求中收到的</font></a><a href="https://en.wikipedia.org/wiki/Quaternion" rel="nofollow"><font style="vertical-align: inherit;">四</font></a></font><a href="https://en.wikipedia.org/wiki/Euler_angles" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">元数</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">转换为所需的欧拉角。</font></font><a href="https://en.wikipedia.org/wiki/Quaternion" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="http://wiki.ros.org/Services" rel="nofollow"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="https://github.com/ros/geometry/blob/indigo-devel/tf/src/tf/transformations.py#L1089"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过一系列固有旋转（180 度偏航和 -90 度俯仰）对齐 URDF 和 DH EE 框架，可以解决抓手/EE 姿势中 URDF 与 DH 框架未对准的问题。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在 Sympy 实现中，在</font><font style="vertical-align: inherit;">构成基础框架和末端执行器之间的整体齐次变换</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">之前，在各个变换中替换 DH 表。</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">这是因为，对六个由三角表达式组成的 4x4 变换矩阵的乘积进行符号简化需要相当长的计算时间（大约几秒）。</font><font style="vertical-align: inherit;">通过将这些三角表达式中的常数和角度的一些值替换为每个单独的矩阵，整个复合齐次变换矩阵的简化速度更快（低至毫秒量级）。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图 5.3 和 5.4 所示，为了考虑由关节 4 引起的 SSS 三角形（连接关节 3 和 5 (WC) 的线段）的 side_a 中的下垂，首先，重新计算 side_a 的长度，其次，重新计算下垂角度计算 y3 轴和 side_a 之间形成的 并在 的计算中进行考虑</font></font><code>theta_3</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用 Sympy对复合旋转矩阵</font></font><code>R3_6</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">进行符号评估以计算 thetas 1、2、3 后，</font></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">将在 Numpy 中重新实现该节点以优化速度：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">mpmath 矩阵和 trig 导入替换为 numpy</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">dh params（字典键）被重新定义为字符串而不是 sympy 符号</font></font></li>
+<li><code>q</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">符号替换为</font></font><code>thetas</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以使联合变量一致</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">dh 参数已从全局范围移出，因为关节变量不像 sympy 符号那样是不可变的</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">sympy 矩阵替换为 numpy 矩阵</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">dh 变量被添加到函数 args 中并通过字符串键访问</font></font></li>
+<li><code>R0_3</code><font style="vertical-align: inherit;"></font><code>numpy.lingalg.inv</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在传入计算逆</font><font style="vertical-align: inherit;">之前转换为浮点数组</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">删除单一和复合变换（仅 fk 需要）</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关节角度计算后会在 dh params 字典中更新</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为了提高 theta 2 和 3 的准确性，side_a 的长度（包含垂度）和垂度角度均四舍五入为高且一致的位数</font></font></li>
+</ul>
+</li>
+</ul>
+<hr>
+<p dir="auto"><a name="user-content-6.0"></a></p>
 
-Figure 3.3 shows the difference between a spherical and non-spherical wrist. In 3.3 (a), joint axes of rotations A, B, C all intersect at the wrist center, whereas, in 3.3(b), the wrist center is non-existent. Physically speaking, a six DOF serial manipulator like the one in figure 3.3 would use the first three joints to control the position of the wrist center while the last three joints (spherical wrist) would orient the end effector as needed, as in a human arm.
-
-The spherical wrist is an important design characteristic in anthropomorphic manipulators which simplifies their kinematic analysis, as demonstrated in section 5. 
-
-#### 3.2 Rotation of Coordinate Frames
-Rotation matrices are a means of *expressing* a vector in one coordinate frame in terms of some other coordinate frame.
-
-<p align="center">
-<img src="figures/3-theory/rot_derivation_ab_3.png" alt="" width="68%">
+<h3 tabindex="-1" dir="auto"><a id="user-content-6-testing-and-review" class="anchor" aria-hidden="true" tabindex="-1" href="#6-testing-and-review"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6. 测试和审查</font></font></h3>
+<h5 tabindex="-1" dir="auto"><a id="user-content-testing" class="anchor" aria-hidden="true" tabindex="-1" href="#testing"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测试</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">实现 ROS 节点后，可以通过在</font><strong><font style="vertical-align: inherit;">测试</font></strong><font style="vertical-align: inherit;">模式</font><font style="vertical-align: inherit;">下启动项目</font><font style="vertical-align: inherit;">来</font><em><font style="vertical-align: inherit;">测试</font></em></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拾取和放置操作，方法</font><font style="vertical-align: inherit;">是</font><em><font style="vertical-align: inherit;">将</font></em><font style="vertical-align: inherit;">.</font></font><strong><font style="vertical-align: inherit;"></font></strong><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font><code>inverse_kinematics.launch</code><font style="vertical-align: inherit;"></font><code>/pick-and-place/kuka_arm/launch/</code><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">此外，如果需要，可以修改目标对象的生成位置。</font><font style="vertical-align: inherit;">为此，请修改</font><font style="vertical-align: inherit;">下面的</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">spawn_location</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">参数</font><font style="vertical-align: inherit;">，其中0-9是spawn_location的有效值，其中0是随机模式。</font></font><code>target_description.launch</code><font style="vertical-align: inherit;"></font><code>/pick-and-place/kuka_arm/launch/</code><font style="vertical-align: inherit;"></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目是通过</font></font><code>safe_spawner</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在新终端中调用 shell 脚本来启动的</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ ./safe_spawner.sh</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ ./safe_spawner.sh" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如果 Gazebo 和 RViz 在几秒钟内没有启动，请通过</font></font><code>Ctrl+C</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在每个弹出的终端中输入来关闭由此 shell 脚本启动的所有进程。</font><font style="vertical-align: inherit;">然后重新运行 safe_spawner 脚本。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Gazebo 和 RViz 启动并运行后，可以在 Gazebo 世界中看到以下内容：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">架子</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">其中一个架子上的蓝色圆柱形目标</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Dropbox 就在机器人旁边</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS节点</font></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">从新的终端窗口运行，如下所示</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ rosrun kuka_arm IK_server.py</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
+$ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">当 Gazebo 和 RViz 窗口并排排列时，</font><font style="vertical-align: inherit;">可以单击 RViz 窗口左侧的“</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">下一步”按钮从一种状态进入另一种状态，同时可以单击</font></font></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">“继续”</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">按钮连续运行完整的拾放循环。</font></font></p>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">警告：</font></font></strong><font style="vertical-align: inherit;"></font><code>safe_spawner</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">需要监视调用 shell 脚本的</font><font style="vertical-align: inherit;">终端窗口是否有</font></font><code>Failed to call service calculate_ik</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">错误，在这种情况下，需要终止所有正在运行的进程并</font></font><code>safe_spawner</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">再次调用脚本。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图 6.1 所示，RViz 中的状态消息随着拾放模拟的不同阶段的遍历而变化。</font><font style="vertical-align: inherit;">在 Gazebo 窗口中观察到驱动情况。</font></font></p>
+<p align="center" dir="auto">
+<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/gazebo_moveit_sync_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+      <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
+        <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" target="_blank">
+          
+        <span data-target="animated-image.imageContainer">
+            <img data-target="animated-image.replacedImage" alt="gazebo_moveit_sync_v2.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/gazebo_moveit_sync_v2.gif" style="display: block; opacity: 1;">
+          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="309" height="247"></canvas></span></a>
+        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play gazebo_moveit_sync_v2.gif" hidden=""></button>
+        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
+          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play gazebo_moveit_sync_v2.gif">
+            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
+            </path></svg>
+            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
+              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+          <a data-target="animated-image.openButton" aria-label="Open gazebo_moveit_sync_v2.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" target="_blank">
+            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
+            </svg>
+          </a>
+        </span>
+      </span></animated-image>
 <br>
-<sup><b>Fig. 3.4&nbsp;&nbsp;A 2D geometric rotation between coordinate frames A and B</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.1 单个拾放周期中遵循的步骤</font></font></b></sup>
 <br>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：Gazebo、MoveIt!]</font></font></sup>
 </p>
-
-In figure 3.2, Point **P** is expressed with vector **u** relative to coordinate *frame B*. The objective is to express point **P** with vector **v** relative to coordinate *frame A*. The basis vectors of **v**, **v<sub>x</sub>** and **v<sub>y</sub>** can be expressed in terms of the basis vectors of **u**, **u<sub>x</sub>** and **u<sub>y</sub>**  as follows:
-
-<p align="center">
-<img src="figures/3-theory/rot_deriv_1.png" alt="" width="32%">
-</p>
-
-where unit vectors of *frame A*, **a<sub>x</sub>** and **a<sub>y</sub>** are expressed in terms of unit vectors of *frame B*, **b<sub>x</sub>** and **b<sub>y</sub>** as follows:
-
-<p align="center">
-<img src="figures/3-theory/rot_deriv_2.png" alt="" width="32%">
-</p>
-
-Substituting (2) in (1) and solving for the dot products yields the following equation:
-
-<p align="center">
-<img src="figures/3-theory/rot_deriv_3.png" alt="" width="32%">
-</p>
-
-where the first term on the right-hand side is the **2D Rotation Matrix**, denoted in this case as **<i><sup>a</sup><sub>b</sub>R</i>**. Any point on coordinate *frame B* multiplied by <i><sup>a</sup><sub>b</sub>R</i> will project it onto *frame A*. In other words, to express a vector **u** on some *frame B* as a vector **v** on a different *frame A*, **u** is multiplied by the rotation matrix with angle theta by which *frame A* is rotated from *fram B*. Also worth noting is that the rotation from A to B is equal to the *transpose* of the rotation of B to A.
-
-
-#### 3.3 Euler Angles
-Euler angles are a system to describe a sequence or a composition of rotations. According to [Euler's Rotation Theorem](https://en.wikipedia.org/wiki/Euler%27s_rotation_theorem), the orientation of any [rigid body](https://en.wikipedia.org/wiki/Rigid_body) w.r.t. some fixed reference frame can always be described by **three** elementary rotations in a given **sequence** as shown in figure 3.3.
-
-<p align="center">
-<img src="figures/3-theory/Inertial-Frame.png" alt="" width="52%">
+<h5 tabindex="-1" dir="auto"><a id="user-content-review" class="anchor" aria-hidden="true" tabindex="-1" href="#review"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">审查</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">感兴趣的主要指标是计算的 EE 轨迹中的误差。</font><font style="vertical-align: inherit;">由于多个关节角度值可能导致相同的 EE 位置，因此关节角度值的误差并不能可靠地指示 EE 位置计算是否正确。</font><font style="vertical-align: inherit;">唯一确定的方法是将 IK 中的关节角度值替换为 FK 并将所得 EE 位置与 IK 服务请求中收到的位置进行比较。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">根据第 4 节的定义，三个评估指标是：</font></font></p>
+<ul dir="auto">
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">成功率</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：总共 10 个拾放周期中的成功百分比（成功定义见表 4.1）</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 错误</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：计算出的 EE 位置轨迹（通过 FK）与 IK 请求中收到的轨迹相比存在误差</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">所用时间</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：总共 10 个拾放周期所用的平均时间</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.2 显示 KR210 使用从 IK 实现获得的关节角度执行到达下车位置的计划 EE 轨迹。</font></font></p>
+<p align="center" dir="auto">
+<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/path_following_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+      <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
+        <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" target="_blank">
+          
+        <span data-target="animated-image.imageContainer">
+            <img data-target="animated-image.replacedImage" alt="path_following_v2.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/path_following_v2.gif" style="display: block; opacity: 1;">
+          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="309" height="253"></canvas></span></a>
+        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play path_following_v2.gif" hidden=""></button>
+        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
+          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play path_following_v2.gif">
+            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
+            </path></svg>
+            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
+              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
+            </svg>
+          </button>
+          <a data-target="animated-image.openButton" aria-label="Open path_following_v2.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" target="_blank">
+            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
+            </svg>
+          </a>
+        </span>
+      </span></animated-image>
 <br>
-<sup><b>Fig. 3.5&nbsp;&nbsp;Defining Euler angles from a sequence of rotations</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.2 执行规划的 EE 轨迹</font></font></b></sup>
 <br>
-<sup>[Source: CHRobotics]</sup>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：MoveIt!]</font></font></sup>
 </p>
-
-Conventionally, the movements about the three axes of rotations and their associated angles are described by the 3D rotation matrices in figure 3.4.
-
-<p align="center">
-<img src="figures/3-theory/euler_rotation_matrices_c.png" alt="" width="85%">
-<br>
-<sup><b>Fig. 3.6&nbsp;&nbsp;3D counter-clockwise rotation matrices describing yaw, pitch and roll</b></sup>
-</p>
-
-Euler angles are characterized by the following properties:
-
-* Tait-Bryan vs. Classic
-* Rotation Order
-* Intrinsic (body fixed) vs. Extrinsic (fixed axes) rotations
-
-**Intrinsic** or body-fixed rotations are performed about the coordinate system *as* rotated by the previous rotation. The rotation sequence changes the axis orientation after each elemental rotation while the body remains fixed.
-
-<p align="center">
-<img src="figures/3-theory/in_rot_matrices.png" alt="" width="62%">
-</p>
-
-In an intrinsic sequence of rotations, such as, a Z-Y-X convention of a yaw, followed by a pitch, followed by a roll, subsequent elemental rotations are *post-multiplied*.
-
-**Extrinsic** or fixed-axis rotations are performed about the *fixed* world reference frame. The original coordinate frame remains motionless while the body changes orientation.
-
-<p align="center">
-<img src="figures/3-theory/ex_rot_matrices.png" alt="" width="62%">
-</p>
-
-In an extrinsic sequence of rotations, such as, a Z-Y-X convention of a yaw, followed by a pitch, followed by a roll, subsequent elemental rotations are *pre-multiplied*.
-
-**Note:** An extrinsic rotation sequence of A, B, C = an intrinsic rotation sequence of C, B, A.
-
-Euler angles, normally in the [Tait–Bryan](https://commons.wikimedia.org/wiki/Tait-Bryan_angles), **Z-X-Y** convention, are also used in robotics for describing the degrees of freedom of a spherical wrist of a robotic manipulator.
-
-Of particular importance is a phenomenon associated with Euler angles known as a [Gimbal Lock](https://en.wikipedia.org/wiki/Gimbal_lock) which occurs when there is a loss of one degree of freedom as a result of the axes of two of the three [gimbals](https://en.wikipedia.org/wiki/Gimbal) driven into a parrallel configuration.
-
-#### 3.4 Homogeneous Transforms
-In the case where a reference frame is both simultaneously rotated *and* translated (transformed) with respect to some other reference frame, a *homogeneous transform matrix* describes the transformation.
-
-<p align="center">
-<img src="figures/3-theory/homo_tf_2.png" alt="" width="44%">
-<br>
-<sup><b>Fig. 3.7&nbsp;&nbsp;Rotation and Translation of frame B relative to frame A</b></sup>
-<br>
-<sup>[Source: Salman Hashmi. BSD License]</sup>
-</p>
-
-In figure 3.7, point P is expressed w.r.t. frame B and the objective is to express it w.r.t. frame A. To do so would require projecting or superimposing frame B onto frame A i.e. first rotating frame B to orient it with frame A and then translating it such that the centers B<sub>0</sub> and A<sub>0</sub> of both frames are aligned.
-
-<p align="center">
-<img src="figures/3-theory/homog_transform_eqns.png" alt="" width="52%">
-</p>
-
-The relationship between the three vectors in figure 3.7 is shown in equation (1). The desired vector to point P from A<sub>0</sub> is the sum of the vector to point P from B<sub>0</sub>, rotated to frame A, and the translation vector to B<sub>0</sub> w.r.t A<sub>0</sub>. Equations (2) and (3) are the matrix-forms of equation (1) so that it can be rendered in software with linear algebra libraries.
-
-<p align="center">
-<img src="figures/3-theory/homog_tf_2_exp.png" alt="" width="55%">
-<br>
-<sup><b>Fig. 3.8&nbsp;&nbsp;Anatomy of the homogeneous transform relationship</b></sup>
-</p>
-
-Figure 3.8 describes the components of equation (2). The desired vector to point P (w.r.t. to A<sub>0</sub>) is obtained by multiplying the given vector to point P (w.r.t. B<sub>0</sub>) by the *homogeneous transform* matrix, composed of the block Rotation matrix projecting B onto A and the block translation vector to B w.r.t A<sub>0</sub>.
-
-<p align="center">
-<img src="figures/3-theory/robo_arm_w.png" alt="" width="43%">
-<br>
-<sup><b>Fig. 3.9&nbsp;&nbsp;Transformation between adjacent revolute joint frames</b></sup>
-</p>
-
-As shown in figure 3.9, the position of the end-effector is known w.r.t. *its* coordinate reference frame *C*. The objective is to express it w.r.t. the *fixed* world coordinate reference frame *W*. This is because the positions of all objects of interest in the manipulator's environment are expressed w.r.t. the world reference frame. In other worlds, both, the end-effector, *and* the objects it interacts with need to be defined on the *same* coordinate reference frame. 
-
-Point P relative to frame *W* can be found by successively applying equation (4) between adjacent joints:
-
-<p align="center">
-<img src="figures/3-theory/robo_arm_sol_complete_2.png" alt="" width="84%">
-</p>
-
-The above process can be summarized in terms of equation (1) with *<sup>W</sup><sub>C</sub>T* being the desired composite homogeneous transform that projects *frame C* onto *frame W*.
-
-<p align="center">
-<img src="figures/3-theory/robo_arm_sol_summary_3.png" alt="" width="21%">
-</p>
-
-#### 3.5 Denavit–Hartenberg parameters
-Before the homogeneous transforms between adjacent links can be computed, the coordinate frames of the joint links on which the transforms are applied must be defined. The [Denavit–Hartenberg (DH) parameters](https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters) are four parameters describing the rotations and translations between adjacent links. The definition of these parameters constitutes a convention for assigning coordinate reference frames to the links of a robotic manipulator. Figure 3.8 shows the so-called *modified* convention of DH parameters as defined by \[Craig, JJ. (2005)].
-
-<p align="center">
-<img src="figures/3-theory/mod_dh_params_labeled_4.png" alt="" width="65%">
-<br>
-<sup><b>Fig. 3.8&nbsp;&nbsp;The four parameters of the Modified DH convention</b></sup>
-<br>
-<sup>[Source: Modified from Wikipedia Commons]</sup>
-</p>
-
-The parameters are defined as follows:
-
-* α<sub>i-1</sub>: twist angle between the z-axes of links *i-1* and *i* (measured about *x<sub>i-1</sub>* in a right-hand sense)
-* ɑ<sub>i-1</sub>: link distance between the z-axes of links *i-1* and *i*  (measured *x<sub>i-1</sub>*)
-* d<sub>i</sub>: link offset signed distance between the x-axes of links  *i-1* and *i*  (measured along *z<sub>i</sub>*)
-* θ<sub>i</sub>: joint angle between the x-axes of links  *i-1* and *i* (measured about *z<sub>i</sub>* in a right-hand sense)
-
-Note:
-
-* The origin of a frame *i* is defined by the intersection of *x<sub>i</sub>* and *z<sub>i</sub>*
-* The x-axes define the common normals between *z<sub>i-1</sub>* and *z<sub>i</sub>*
-
-Recall that to compute the position of the end-effector w.r.t. the base or world reference frame, transforms between adjacent links are composed as follows:
-
-<p align="center">
-<img src="figures/3-theory/dh_eq_1.png" alt="" width="55%">
-</p>
-
-where the base frame is denoted by *0* and the end-effector's frame denoted by *N*. Thus,  <sup>0</sup><sub>N</sub>T defines the homogeneous transformation that projects frame *N* onto frame *0*. More specifically, a single transform between links *i-1* and *i* is given by
-
-<p align="center">
-<img src="figures/3-theory/dh_eq_2.png" alt="" width="55%">
-</p>
-
-<p align="center">
-<img src="figures/3-theory/dh_eq_3_v2.png" alt="" width="55%">
-</p>
-
-and is made up up of two rotations *R* of magnitudes α and θ, and two displacements *D* of magnitudes ɑ and d.
-
-The parameter assignment process for open kinematic chains with n degrees of freedom (i.e., joints) is summarized as:
-
-1. Label all joints from {1, 2, … , n}.
-2. Label all links from {0, 1, …, n} starting with the fixed base link as 0.
-3. Draw lines through all joints, defining the joint axes.
-4. Assign the Z-axis of each frame to point along its joint axis.
-5. Identify the common normal between each frame *Z*<sub>i-1</sub> and  *Z*<sub>i</sub>
-6. The endpoints of *intermediate links* (i.e., not the base link or the end effector) are associated with two joint axes, {i} and {i+1}. For i from 1 to n-1, assign the *X*<sub>i</sub> to be ...
-	1. For skew axes, along the normal between *Z*<sub>i</sub> and *Z*<sub>i+1</sub> and pointing from {i} to {i+1}.
-	2. For intersecting axes, normal to the plane containing *Z*<sub>i</sub> and *Z*<sub>i+1</sub>.
-	3. For parallel or coincident axes, the assignment is arbitrary; look for ways to make other DH parameters equal to zero.
-7. For the base link, always choose frame {0} to be coincident with frame {1} when the first joint variable (θ<sub>1</sub> 
-​​  or d<sub>1</sub>) is equal to zero. This will guarantee that α<sub>0</sub> = a<sub>0</sub> = 0, and, if joint 1 is a revolute, d<sub>1</sub> = 0. If joint 1 is prismatic, then θ<sub>1</sub> = 0.
-8. For the end effector frame, if joint n is revolute, choose *X*<sub>n</sub> to be in the direction of *X*<sub>n−1</sub>
-​​  when θ<sub>n</sub>​ = 0 and the origin of frame {n} such that d<sub>n</sub> = 0.
-
-Special cases involving the *Z*<sub>i-1</sub> and *Z*<sub>i</sub> axes:
-
-* collinear lines: alpha = 0 and a = 0
-* parallel lines: alpha = 0 and a ≠ 0
-* intersecting lines: alpha ≠ 0 and a = 0
-* If the common normal intersects *Z*<sub>i</sub> at the origin of frame i, then d​<sub>i</sub> is zero.
-
-Once the frame assignments are made, the DH parameters are typically presented in tabular form (below). Each row in the table corresponds to the homogeneous transform from frame {i} to frame {i+1}.
-
-<p align="center">
-<img src="figures/3-theory/mod_dh_table_2.png" alt="" width="58%">
-<br>
-<sup><b>Table 3.1&nbsp;&nbsp;The four parameters of the Modified DH convention</b></sup>
-</p>
-
-#### 3.6 Forward and Inverse Kinematics
-Forward Kinematics is the process of computing a manipulator's end-effector position in Cartesian coordinates from its given joint angles. This can be achieved by a composition of homogeneous transformations that map the base frame onto the end-effector's frame, taking as input the joint angles. The end-effector's coordinates can then be extracted from the resulting composite transform matrix.
-
-The relationship between Forward and Inverse Kinematics is depicted in figure 3.9,
-
-<p align="center">
-<img src="figures/3-theory/fk_ik_3.png" alt="" width="43%">
-<br>
-<sup><b>Fig. 3.9&nbsp;&nbsp;Relationship between Forward and Inverse Kinematics</b></sup>
-</p>
-
-Inverse Kinematics is the reverse process where the EE position is known and a set of joint angles that would result in that position need to be determined. This is a more complicated process than FK as multiple solutions can exist for the same EE position. However, no joint angle solutions exist for any EE position outside the manipulator's workspace. There are two main approaches to solve the IK problem: numerical and analytical. The later approach is used in this project.
-
-<!--
-#### 3.7 Robot Operating System (ROS)
-
-##### ROS_MASTER:
-* manager of the ROS *Nodes*
-* allows _Nodes to locate one another and communicate
-* also hosts the _Parameter_Server so running _Nodes can lookup parameter and configuration values e.g. wheel radius
-* More Explanation:
-* maintains a registry of all the active nodes on a system. It then allows these nodes to discover other nodes to establish lines of communications between nodes i.e. the nodes themselves don't have to communicate to other nodes through the ROS master; they can do it directly once the ROS master has allowed them to discover other relavant nodes for communication.
-
-##### Communication between Nodes:
-- Through _Topics or _Services
-- Pub-Sub comm pattern vs, Req-Res comm pattern
-- Pub-Sub comm pattern:
-	- _Nodes can also share data (i.e. publish and subsrcribe _Messages) 
-	  amongst themselves via nameds buses called _Topics. 
-	  (Recall that the only stuff that nodes and ROS master share 
-	  are Parameter values)
-	- Nodes publish and subscribe _Messages over _Topics
-- Req-Res comm architecture:
-	- Like _Topics, _Services allow the passing of message 
-	  betwee nodes
-
-##### Environment Setup:
-- Before we can launch and use a ROS package like turtlesim, 
-  we must first ensure that all of the ROS environment variables 
-  have been correctly set.
-- Your ROS distro e.g. Kinetic provides a bash script called
-  setup.bash to ensure this.
-- This script can be run with the bash command: source
-- Among other things, the ROS environment variables tell our 
-  bash shell where ROS commands and packages can be found.
-
-##### roscore
-- rosout node is responsible for aggregating, filtering and
-  recording log messages to a text file.
-
-##### catkin
-- a powerful build and package management system provided
-  by ROS.
-- a catkin workspace is a direcoty where catkin packages
-  are built, modified and installed
-- all ROS software components are organized into and 
-  distributed as catkin packages
-- catkin packages contain resources like source code for
-  nodes, useful scripts, config file etc.
-
-##### roslaunch
-- Launch ROS Master and multiple nodes with one simple command
-- Set default parameters on the parameter server
-- Automatically re-spawn processes that have died
--->
-
-------------
-
-<a name="4.0"></a>
-<!--<div style="text-align:left;">
-  <span style="font-size: 1.4em; margin-top: 0.83em; margin-bottom: 0.83em; margin-left: 0; margin-right: 0; font-weight: bold;">4. Design Requirements</span><span style="float:right;"><a href="#top">Back to Top</a></span>
-</div>-->
-### 4. Design Requirements
-The scope of the design is limited to a single pick-and-place cycle that consists of the following steps:
-
-1. Movement of EE towards the target object
-2. Grasping/picking the target object
-3. Movement towards the drop-site
-4. Dropping/placing the object at the drop-site
-
-Figure 4.1 shows these steps in Gazebo.
-
-<p align="center">
-<img src="figures/4-requirements/gazebo-req-2.gif" alt="" width="53%">
-<br>
-<sup><b>Fig 4.1&nbsp;&nbsp;A single pick-and-place cycle</b></sup>
-<br>
-<sup>[Source: Gazebo]</sup>
-</p>
-
-The primary metrics of interest are:
-
-* Percentage of success in a total of 10 pick-and-place cycles
-* Error in the calculated EE position trajectory (via FK) compared to the EE position received in the IK service request
-* Time taken to execute a complete pick-and-place cycle
-
-<p align="center">
-<img src="figures/4-requirements/moveit_demo_v3.gif" alt="" width="53%">
-<br>
-<sup><b>Fig 4.2&nbsp;&nbsp;Planned EE trajectory to drop-off location</b></sup>
-<br>
-<sup>[Source: RViz, MoveIt!]</sup>
-</p>
-
-Table 4.1 shows the criteria on which the project is evaluated,
-
-<p align="center">
-<img src="figures/4-requirements/eval_criteria_v2.png" alt="" width="75%">
-<br>
-<sup><b>Table 4.1&nbsp;&nbsp;Project evaluation criteria</b></sup>
-</p>
-
-The minimum criteria is to achieve a success rate of at least *80%* with an EE trajectory error not greater than *0.5*.
-
-------------
-
-<a name="5.0"></a>
-<!--<div style="text-align:left;">
-  <span style="font-size: 1.4em; margin-top: 0.83em; margin-bottom: 0.83em; margin-left: 0; margin-right: 0; font-weight: bold;">5. Design Implementation</span><span style="float:right;"><a href="#top">Back to Top</a></span>
-</div>-->
-### 5. Design Implementation
-In order to perform a single pick-and-place operation, joint angles corresponding to the given locations of the target object and drop-off site need to be determined. Towards this goal, an Inverse Kinematic analysis is performed and implemented in software using ROS and Python.
-
-#### 5.1 Kinematic Analysis
-
-##### DH Parameters
-Figure 5.1 (a) shows the Kuka KR210 serial manipulator and (b) shows its *zero configuration* schematic indicating its DH parameters. In the *zero configuration*, all joint angles are assumed to be zero.
-
-<p align="center">
-<img src="figures/5-implementation/kr210_arch_5.png" alt="" width="80%">
-<br>
-<sup><b>Fig. 5.1&nbsp;&nbsp;The KUKA KR210 6-DOF robotic manipulator and its schematic architecture</b></sup>
-<br>
-<sup>[Source: (a) KUKA Roboter GmbH, (b) Salman Hashmi, BSD License]</sup>
-</p>
-
-Note that, for joint 2, there is a constant -90 degree offset between x<sub>1</sub> and x<sub>2</sub>.
-
-The following steps are performed to construct the KR210 schematic and derive its DH Table:
-
-1. Label joints from 1 to n = 6
-2. Label each link from 0 to n = 6
-3. Define z-axes as the joint axes (joints 2, 3, and 5 are all parallel while joints 4 and 6 are coincident)
-4. Define x-axes as the common normals
-5. Define reference frame origins for each joint
-6. Define the x-axes as the common normals between z<sub>i-1</sub> and z<sub>i</sub>
-7. Define the origin of frame {i} as the intersection of x<sub>i</sub> with z<sub>i</sub>
-8. Add a fixed frame rigidly attached to link 6 for the gripper or EE (Note: the EE reference frame O<sub>EE</sub> differs from the link 6 reference frame of O<sub>4</sub>, O<sub>5</sub>, O<sub>6</sub> only by a translation along z<sub>6</sub>)
-9. Label all non-zero DH parameters
-
-The last step is implemented using table 5.1 which is constructed from the KR210 URDF file, `kr210.urdf.xacro`.
-
-<p align="center">
-<img src="figures/5-implementation/urdf_table.png" alt="" width="85%">
-<br>
-<sup><b>Table 5.1&nbsp;&nbsp;Location of joint {i} relative to its parent joint {i-1}  from the KR210 URDF file</b></sup>
-</p>
-
-Note the following concerning the URDF file and table 5.1,
-
-* RViz does not directly show joint reference frames but instead shows link reference frames
-* In th URDF file, each joint is defined relative to the center (not origin) of its parent joint e.g. row 2 shows the location of joint 2 relative to the center (not origin) of joint 1
-* The base_link in Table 5.1 is depicted as link0 (l0) in figure 5.1 (b)
-
-The DH Table is then derived from figure 5.1 (b) and table 5.1,
-
-<p align="center">
-<img src="figures/5-implementation//DH_Table.png" alt="" width="45%">
-<br>
-<sup><b>Table 5.2&nbsp;&nbsp;Modified DH Table of the KR210</b></sup>
-</p>
-
-##### Inverse Kinematic Solution Approach
-An *analytical* or *closed-form* approach is used to perform inverse kinematics. This approach has two advantages:
-
-1. Much faster to solve compare to a numerical approach
-2. Easier to develop rules for which solution is appropriate
-
-Additionally, The type of robotic manipulator used (anthropomorphic) meets the conditions for applicability of this approach:
-
-1. Axes of rotations of 3 adjacent joints should intersect at a single point (satisfied by a spherical wrist design)
-2. Axes of rotations of 3 adjacent joints are parallel (special case of 1. since parallel lines intersect at infinity)
-
-The *4 x 4* homogeneous transform between adjacent links from section 3 is shown here again for clarity:
- 
-<p align="center">
-<img src="figures/5-implementation/dh_eq_3_v2.png" alt="" width="47%">
-</p>
-
-<!--t is noted that for a 6-joint manipulator, 6 multiples of the homogeneous transform are invloved in the overall transformation between the base and the end-effector, and 12 simulatenous nonlinear equaitons would have to solved for each transform multiple.
-
-It is noted that 12 simulatenous nonlinear equaitons (from first 3 rows) would have to solved for a single transform between adjacent links for a total of 6 transofrm multiples corresponding to a 6-joint manipulator for the overall transformation between the base link and the end-effector.-->
-
-It is noted that 12 simultaneous nonlinear equations would have to be solved, one for each term in the first 3 rows of the overall homogeneous transformation between the base link and the end-effector. Therefore, to simplify the solution, The spherical wrist design is exploited to kinematically *decouple* the *position* and *orientation* of the end-effector such that the original problem is reduced to two simpler problems that can be solved independently:
-
-1. Find position (Cartesian coordinates) of WC and geometrically compute joint angles 1, 2, 3 that physically control it
-2. Find the composition of x-y-z rotations (r, p, y) that orients EE and analytically solve its Euler angles: joint angles 4, 5, 6
-
-<!--
-* position&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - cartesian coordinates of WC
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Joints 1, 2, 3 control position of WC in a 6-DOF serial manipulator
-
-* orientation&nbsp;&nbsp; - composition of rotations (pitch, roll, yaw) to orient the end-effector
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Joints 4, 5, 6 orient the end-effector as needed
--->
-
-##### Inverse Position Kinematics
-As mentioned previously, joints 1, 2, and 3, control the position of the *spherical wrist* consisting of joints 4, 5, and 6. In the *position* part of Inverse Kinematics, joint angles 1, 2, and 3 are geometrically calculated from the position of the spherical wrist center (WC). This position is determined from the end-effector position (EE) using figure 5.2.
-
-<p align="center">
-<img src="figures/5-implementation/wc_1_v2.png" alt="" width="46%">
-<br>
-<sup><b>Fig. 5.2&nbsp;&nbsp;Finding location of WC relative to base frame <i>O</i></b></sup>
-</p>
-
-The position vector of WC w.r.t. to EE (**r**<sub>WC/EE<sub>O</sub></sub>) is a simple translation along z<sub>EE</sub>. The desired position vector of WC w.r.t. the base frame O can be found by transforming **r**<sub>WC/EE<sub>O</sub></sub> onto the base frame O using a homogeneous transform consisting of Rotation matrix <sup>0</sup><sub>EE</sub>R and a translation vector from O to EE,
-
-<p align="center">
-<img src="figures/5-implementation/wc_calc_v2.png" alt="" width="62%">
-</p>
-
-where d<sub>EE</sub> is given by d<sub>7</sub> in the DH Table 5.2, and the column 3 vector of the Rotation Matrix describes the z-axis of EE relative to base frame O.
-
-Once the Cartesian coordinates of WC are known, θ<sub>1</sub> and θ<sub>2</sub> can be calculated using the [Law of Cosines](https://en.wikipedia.org/wiki/Law_of_cosines) on an [SSS](https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html) triangle with edges at joints 2, 3 and 5, as shown in figure 5.3.
-
-<p align="center">
-<img src="figures/5-implementation/thetas_1_2.png" alt="" width="47%">
-<br>
-<sup><b>Fig. 5.3&nbsp;&nbsp;Calculation of θ<sub>1</sub> and θ<sub>2</sub> using an SSS triangle</b></sup>
-</p>
-
-*Note:* Joint angles are defined as rotations about z between adjacent x axes, e.g. joint angle θ<sub>3</sub> is the angle between x<sub>2</sub> and x<sub>3</sub> about z<sub>3</sub> (not shown).
-
-θ<sub>1</sub> is the joint-1 angle between x<sub>0</sub> and x<sub>1</sub> measured about z<sub>1</sub>. It is calculated using the x and y coordinates of WC relative to the base frame,
-
-<p align="center">
-<img src="figures/5-implementation/theta1_eqn.png" alt="" width="16%">
-</p>
-
-θ<sub>2</sub> is the joint-2 angle between x<sub>1</sub> and x<sub>2</sub> measured about z<sub>2</sub>. Note that, for joint 2, there is a constant -90 degree offset between x<sub>1</sub> and x<sub>2</sub> as shown in figure 5.1 (b) and in DH Table 5.2 for i = 2,
-
-<p align="center">
-<img src="figures/5-implementation/theta2_eqn_v2.png" alt="" width="24%">
-</p>
-
-where W is given by,
-
-<p align="center">
-<img src="figures/5-implementation/W_eqn.png" alt="" width="19%">
-</p>
-
-and A is determined by the Law of Cosines.
-
-θ<sub>3</sub> is the joint-3 angle between x<sub>2</sub> and x<sub>3</sub> measured about z<sub>3</sub>. Figure 5.4 (b) is used to calculate θ<sub>3</sub> where 5.4 (a) is used as a comparison to help visualize the sag in the links between joints 3 and 5.
-
-<p align="center">
-<img src="figures/5-implementation/theta3_v2.png" alt="" width="77%">
-<br>
-<sup><b>Fig. 5.4&nbsp;&nbsp;Calculation of θ<sub>3</sub> and accounting for sag in the links between j3 and j5</b></sup>
-</p>
-
-As described in figure 5.4 (b) *Final*, θ<sub>3</sub> is given by,
-
-<p align="center">
-<img src="figures/5-implementation/theta3_eqn.png" alt="" width="25%">
-</p>
-
-where the sag angle is,
-
-<p align="center">
-<img src="figures/5-implementation/sag_eqn.png" alt="" width="16%">
-</p>
-
-and B is determined by the Law of Cosines.
-
-##### Inverse Orientation Kinematics
-Recall that joints 4, 5, and 6 constitute the spherical wrist design, where joint 5 is the wrist center (WC). In the *orientation* part of Inverse Kinematics, joint angles 4, 5, and 6 are analytically calculated from <sup>3</sup><sub>6</sub>R; the composition of x-y-z rotations (roll, pitch, yaw) that orients the WC. Thus, joint angles 4, 5, and 6 are the Euler angles of this composition of rotations.
-
-<sup>3</sup><sub>6</sub>R can be determined from <sup>0</sup><sub>6</sub>R as follows,
-
-<p align="center">
-<img src="figures/5-implementation/R3_6_calc_v2.png" alt="" width="32%">
-</p>
-
-where <sup>i-1</sup><sub>i</sub>R is the composite rotation matrix from the homogeneous transform <sup>i-1</sup><sub>i</sub>T,
-
-<p align="center">
-<img src="figures/5-implementation/homog_rotation.png" alt="" width="39%">
-</p>
-
-and <sup>0</sup><sub>3</sub>R is given by,
-
-<p align="center">
-<img src="figures/5-implementation/R0_3.png" alt="" width="18.3%">
-</p>
-
-and since joint angles θ<sub>1</sub>, θ<sub>2</sub>, and θ<sub>3</sub> have already been calculated, <sup>0</sup><sub>3</sub>R is no longer a variable as θ<sub>1</sub>, θ<sub>2</sub>, and θ<sub>3</sub> can simply be substituted in <sup>0</sup><sub>1</sub>R, <sup>1</sup><sub>2</sub>R, and <sup>2</sup><sub>3</sub>R respectively, leaving θ<sub>4</sub>, θ<sub>5</sub>, and θ<sub>6</sub> as the only variables in <sup>3</sup><sub>6</sub>R. 
-
-Symbolically evaluating <sup>3</sup><sub>6</sub>R in sympy yields,
-
-<p align="center">
-<img src="figures/5-implementation/R3_6.png" alt="" width="100%">
-</p>
-
-Joint angles, θ<sub>4</sub>, θ<sub>5</sub>, and θ<sub>6</sub> can then be analytically determined from <sup>3</sup><sub>6</sub>R,
-
-<p align="center">
-<img src="figures/5-implementation/thetas_4_5_6_v2.png" alt="" width="52%">
-</p>
-
-#### 5.2 Software Implementation
-The primary code for the project is in the [ROS node](http://wiki.ros.org/ROS/Tutorials/UnderstandingNodes), `IK_server` in the `kuka_arm` [ROS package](http://wiki.ros.org/Packages), and the KR210 is operated in a ROS based simulator environment consisting of [Gazebo](http://gazebosim.org/), [RViz](http://wiki.ros.org/rviz) and [MoveIt!](http://moveit.ros.org/).
-
-The `IK_server` node receives end-effector (gripper) poses from the KR210 simulator and performs
-Inverse Kinematics, providing a response to the simulator with calculated joint variable values (joint angles in this case). The IK analysis conducted in section 5.1 is implemented in the `IK_server` node using [Sympy](http://www.sympy.org/en/index.html) and [Numpy](http://www.numpy.org/) libraries.
-
-The following are selected notes of interest regarding this implementation:
-
-* All python code conforms to [PEP 8](https://www.python.org/dev/peps/pep-0008/) wherever possible with occasional deviations to accommodate Sympy and Numpy matrix notations, and where it improves readability. Similarly, function docstrings are conformed to [PEP 257](https://www.python.org/dev/peps/pep-0257/) convention.
-
-* The DH table for the KR210 is constructed from the `kr210.urdf.xacro` file in the `kuka_arm` ROS package.
-
-* The gripper or EE orientations are converted to the desired [Euler angles](https://en.wikipedia.org/wiki/Euler_angles) from the [quaternions](https://en.wikipedia.org/wiki/Quaternion) received in the IK [service](http://wiki.ros.org/Services) request using ROS [geometry transformations module](https://github.com/ros/geometry/blob/indigo-devel/tf/src/tf/transformations.py#L1089).
-
-* URDF vs DH frame misalignment in gripper/EE pose is addressed by aligning the URDF and DH EE frames through a sequence of intrinsic rotations: 180 deg yaw and -90 deg pitch.
-
-* In the Sympy implementation, the DH Table is substituted in individual transforms *before* composing the overall homogeneous transform between the base frame and the end-effector. This is because it takes considerable calculation time (in the order of several seconds) to symbolically simplify the product of six 4x4 transform matrices each consisting of trigonometric expressions. By substituting some of the values for constants and angles in these trigonometric expressions for each individual matrix, the overall composite homogeneous transform matrix is simplified much faster (down to the order of milliseconds).
-
-* As described in figures 5.3 and 5.4, to account for sag in side_a of the SSS triangle (the line segment connecting joints 3 and 5 (WC)) caused by joint 4, first, length of side_a is recalculated, and second, the sag angle formed between y3-axis and side_a is calculated and accounted for in the calculation of `theta_3`.
-
-* Once the composite Rotation matrix, `R3_6`, is symbolically evaluated using Sympy for calculating thetas 1, 2, 3, the `IK_server` node is reimplemented in Numpy to optimize speed:
-
-	* mpmath matrix and trig imports are replaced with numpy
-	* dh params (dict keys) are redefined as strings instead of sympy symbols
-	* `q` symbols are replaced with `thetas` to make joint variables consistent
-	* dh params are moved from global scope since joint variables are not immutable like sympy symbols
-	* sympy matrices are replaced with numpy matrices
-	* dh variable is added to function args and accessed with string keys
-	* `R0_3` is converted to a float array before passing in `numpy.lingalg.inv` to compute inverse
-	* Remove single and composite transforms (required for fk only)
-	* joint angles are updated in dh params dictionary after they are calculated
-	* To improve accuracy of theta 2 and 3, both the length of side_a (containing sag) and the sag angle are rounded-off to a high and consistent number of digits
-
-------------
-
-<a name="6.0"></a>
-<!--<div style="text-align:left;">
-<span style="font-size: 1.4em; margin-top: 0.83em; margin-bottom: 0.83em; margin-left: 0; margin-right: 0; font-weight: bold;"> 6. Testing  and Review</span><span style="float:right;"><a href="#top">Back to Top</a></span>
-</div>-->
-### 6. Testing and Review
-##### Testing
-After implementing the `IK_server` ROS node, the pick-and-place operation can be tested by launching the project in **test** mode by setting the *demo* flag to *"false"* in `inverse_kinematics.launch` file under `/pick-and-place/kuka_arm/launch/`.
-
-In addition, the spawn location of the target object can be modified if desired. To do this, modify the **spawn_location** argument in `target_description.launch`under `/pick-and-place/kuka_arm/launch/` where 0-9 are valid values for spawn_location with 0 being random mode.
-
-The project is launched by calling the `safe_spawner` shell script in a fresh terminal
-
-```sh
-$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-$ ./safe_spawner.sh
-```
-
-**Note:** If Gazebo and RViz do not launch within a couple of seconds, close all processes started by this shell script by entering `Ctrl+C` in each of the sprung up terminals. Then rerun the safe_spawner script.
-
-Once Gazebo and RViz are up and running, and the following can be seen in the gazebo world:
-
-* Robot
-* Shelf
-* Blue cylindrical target in one of the shelves
-* Dropbox right next to the robot
-
-The `IK_server` ROS node is run from a new terminal window as follows 
-
-```sh
-$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-$ rosrun kuka_arm IK_server.py
-```
-	
-With Gazebo and RViz windows arranged side-by-side, the **Next** button on left side of RViz window can be clicked to proceed from one state to another, while the **Continue** button can be clicked to continuously run a complete pick-and-place cycle. 
-
-**Warning:** The terminal window from which the `safe_spawner` shell script is called needs to be monitored for a `Failed to call service calculate_ik` error, in which case, all running processes need to be killed and the `safe_spawner` script called again.
-
-As shown in figure 6.1, the status message in RViz changes as the different stages of pick-and-place simulation are traversed. Actuation is observed in the Gazebo window.
-
-<p align="center">
-<img src="figures/6-testing/gazebo_moveit_sync_v2.gif" alt="" width="38%">
-<br>
-<sup><b>Fig. 6.1&nbsp;&nbsp;Steps followed in a single pick-and-place cycle</b></sup>
-<br>
-<sup>[Source: Gazebo, MoveIt!]</sup>
-</p>
-
-##### Review
-The primary metric of interest is the error in the calculated EE trajectories. Since multiple joint angle values can lead to the same EE position, error in joint angle values is not a reliable indicator of whether the EE position is being calculated correctly. The only way to know conclusively is to substitute the joint angle values from IK into FK and compare the resulting EE position to the one received in the IK service request.
-
-As defined in section 4, the three evaluation metrics are:
-
-* *Success Rate*: &nbsp;&nbsp; Percentage of success in a total of 10 pick-and-place cycles (success defined in Table 4.1)
-* *EE Error*: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Error in the calculated EE position trajectory (via FK) compared to the one received in IK request
-* *Time Taken*: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Average time taken for a total of 10 pick-and-place cycles
- 
-
-Figure 6.2 shows the KR210 execute a planned EE trajectory to the drop-off location with joint angles obtained from the IK implementation.
-
-<p align="center">
-<img src="figures/6-testing/path_following_v2.gif" alt="" width="38%">
-<br>
-<sup><b>Fig. 6.2&nbsp;&nbsp;Executing a planned EE trajectory</b></sup>
-<br>
-<sup>[Source: MoveIt!]</sup>
-</p>
-
-A cursory visual inspection of the animation in figure 6.2 shows that the trajectory of received EE positions in the IK service request is being correctly followed by the six joints of the KR210. The same is observed in Figure 6.3 which comprehensively compares various *requested* EE trajectories with the *followed* EE trajectories and shows the overall EE position error for each. 
-
-<p align="center">
-<img src="figures/6-testing/ee_plot_1_v3.png" alt="" width="76.8%">
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对图 6.2 中的动画进行粗略目视检查表明，KR210 的六个关节正确遵循 IK 服务请求中接收到的 EE 位置的轨迹。</font><font style="vertical-align: inherit;">图 6.3 中也观察到了同样的情况，它全面比较了各种</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请求的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 轨迹与</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">遵循的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 轨迹，并显示了每个轨迹的总体 EE 位置误差。</font></font></p>
+<p align="center" dir="auto">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_1_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_1_v3.png" alt="" width="76.8%" style="max-width: 100%;"></a>
 <br>
 <br>
-<img src="figures/6-testing/ee_plot_2_v3.png" alt="" width="77%">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_2_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_2_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<img src="figures/6-testing/ee_plot_3_v3.png" alt="" width="77%">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_3_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_3_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<img src="figures/6-testing/ee_plot_4_v3.png" alt="" width="77%">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_4_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_4_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<img src="figures/6-testing/ee_plot_5_v3.png" alt="" width="77%">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_5_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_5_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<img src="figures/6-testing/ee_plot_6_v3.png" alt="" width="77.5%">
+<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_6_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_6_v3.png" alt="" width="77.5%" style="max-width: 100%;"></a>
 <br>
 <br>
-<sup>(a) Received EE positions in IK request&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(b) Comparison of received and fk EE positions&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</sup>
+<sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">(a) IK 请求中收到的 EE 位置 (b) 收到的和 fk EE 位置的比较&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font></font></sup>
 <br>
 <br>
-<sup><b>Fig. 6.3&nbsp;&nbsp;Visualizing planned EE trajectories and associated error</b></sup>
+<sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.3 可视化计划的 EE 轨迹和相关误差</font></font></b></sup>
 </p>
-
-Figure 6.3 (a) shows six EE position trajectories received by the `IK_server` ROS node in the IK service request; A, C, and E to the target object (not visible) and B, E, and F to the drop-off location. Figure 6.3 (b) compares these received EE positions (*rec_ee* in blue) to the ones obtained by FK (*fk_ee* in orange) from the six joint angles. Due to a very low resulting EE overall offset error (*ee_error* in magenta), the blue plot points of the received EE positions are hidden behind the orange plot points of the EE positions obtained from FK. A visual inspection also shows 
-
-##### Results
-After a total of 10 runs in the simulator, the following results are achieved:
-
-* *Success Rate*: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100%
-* *EE Error*: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 0.00000006
-* *Average Time*: &nbsp;&nbsp;&nbsp;&nbsp; 51 sec
-
-##### Improvements
-In addition to the accuracy improvements made in the calculation of *theta2* and *theta3* in section 5.1, as well as a 350x time improvement with a Numpy implementation of the IK_server node, the following can offer further improvements in EE error and speeds,
-
-* Ensuring precision of intermediate calculation results when solving for joint angles
-* Use of quaternions instead of Euler angles
-* Solving the SSS triangle with a slightly faster Law of Cosines alternative:
-	1. Using The Law of Cosines to calculate the largest angle
-	2. Using The Law of Sines to find another angle
-	3. Using angles of a triangle add to 180° to find the last angle.
-
-------------
-### References
-
-1. Narong Aphiratsakun. (2015). MT411 Robotic Engineering, *Asian Institute of Technology (AIT)*. http://slideplayer.com/slide/10377412/
-
-2. Siciliano et al. (2010). Robotics: Modelling, Planning and Control, (*Springer*)
-
-3. Elashry, Khaled & Glynn, Ruairi. (2014). An Approach to Automated Construction Using Adaptive Programing. 51-66. 10.1007/978-3-319-04663-1_4, (*Springer*)
-
-4. Yi Cao, Ke Lu, Xiujuan Li and Yi Zang (2011). Accurate Numerical Methods for Computing 2D and 3D Robot Workspace [Journal] // International Journal of Advanced Robotic Systems : INTECH, August 2011. – 6 : Vol. VIII – pp. 1-13.
-
-5. Understanding Euler Angles. CHRobotics. http://www.chrobotics.com/library/understanding-euler-angles
-
-6. Craig, JJ. (2005). Introduction to Robotics: Mechanics and Control, 3rd Ed (*Pearson Education*)
-
-------------
-
-> Copyright © 2017, Salman Hashmi. See attached license.
-
+<p dir="auto"><font style="vertical-align: inherit;"></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图6.3(a)展示了ROS节点在IK服务请求中</font><font style="vertical-align: inherit;">接收到的6个EE位置轨迹；</font><font style="vertical-align: inherit;">A、C 和 E 到目标物体（不可见），B、E 和 F 到下车位置。</font><font style="vertical-align: inherit;">图6.3（b）将这些接收到的EE位置（蓝色的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">rec_ee</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）与FK（橙色的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">fk_ee</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）从六个关节角度获得的位置进行了比较。</font><font style="vertical-align: inherit;">由于产生的 EE 总体偏移误差非常低（洋红色中的</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ee_error</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">），接收到的 EE 位置的蓝色图点隐藏在从 FK 获得的 EE 位置的橙色图点后面。</font><font style="vertical-align: inherit;">目视检查还显示</font></font></p>
+<h5 tabindex="-1" dir="auto"><a id="user-content-results" class="anchor" aria-hidden="true" tabindex="-1" href="#results"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">结果</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在模拟器中总共运行10次后，得到以下结果：</font></font></p>
+<ul dir="auto">
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">成功率</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：100%</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE错误</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：0.00000006</font></font></li>
+<li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">平均时间</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：51秒</font></font></li>
+</ul>
+<h5 tabindex="-1" dir="auto"><a id="user-content-improvements" class="anchor" aria-hidden="true" tabindex="-1" href="#improvements"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">改进</font></font></h5>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">除了第 5.1 节中</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">theta2</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">theta3</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">计算的准确性改进，以及 IK_server 节点的 Numpy 实现的 350 倍时间改进之外，以下内容还可以进一步改进 EE 错误和速度，</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">求解关节角度时确保中间计算结果的精度</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用四元数代替欧拉角</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用稍快的余弦定理替代方案求解 SSS 三角形：
+</font></font><ol dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用余弦定理计算最大角度</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">利用正弦定理找到另一个角度</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用三角形的内角相加 180° 来找到最后一个角。</font></font></li>
+</ol>
+</li>
+</ul>
+<hr>
+<h3 tabindex="-1" dir="auto"><a id="user-content-references" class="anchor" aria-hidden="true" tabindex="-1" href="#references"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">参考</font></font></h3>
+<ol dir="auto">
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">纳隆·阿菲拉察昆。</font><font style="vertical-align: inherit;">（2015）。</font><font style="vertical-align: inherit;">MT411 机器人工程，</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">亚洲理工学院 (AIT)</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font><a href="http://slideplayer.com/slide/10377412/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">http://slideplayer.com/slide/10377412/</font></font></a></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">西西利亚诺等人。</font><font style="vertical-align: inherit;">（2010）。</font><font style="vertical-align: inherit;">机器人技术：建模、规划和控制，（</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Springer</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">埃拉什里、哈立德和格林、鲁艾里。</font><font style="vertical-align: inherit;">（2014）。</font><font style="vertical-align: inherit;">使用自适应编程的自动化构建方法。</font><font style="vertical-align: inherit;">51-66。</font><font style="vertical-align: inherit;">10.1007/978-3-319-04663-1_4，（</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">施普林格</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">曹毅、陆克、李秀娟、臧一 (2011)。</font><font style="vertical-align: inherit;">用于计算 2D 和 3D 机器人工作空间的精确数值方法 [期刊] // 国际高级机器人系统期刊：INTECH，2011 年 8 月。 – 6：卷。</font><font style="vertical-align: inherit;">VIII – 第 1-13 页。</font></font></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">了解欧拉角。</font><font style="vertical-align: inherit;">CH机器人。</font></font><a href="http://www.chrobotics.com/library/understanding-euler-angles" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">http://www.chrobotics.com/library/understanding-euler-angles</font></font></a></p>
+</li>
+<li>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">克雷格，JJ. </font><font style="vertical-align: inherit;">（2005）。</font><font style="vertical-align: inherit;">机器人学概论：力学与控制，第三版（</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">培生教育</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">）</font></font></p>
+</li>
+</ol>
+<hr>
+<blockquote>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">版权所有 © 2017，萨尔曼·哈希米。</font><font style="vertical-align: inherit;">请参阅随附的许可证。</font></font></p>
+</blockquote>
+</article></div>
