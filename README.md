@@ -779,45 +779,17 @@ rosrun kuka_arm IK_server.py</pre><div class="zeroclipboard-container">
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">ROS节点</font></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">从新的终端窗口运行，如下所示</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
 rosrun kuka_arm IK_server.py</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-rosrun kuka_arm IK_server.py" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+ 
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">当 Gazebo 和 RViz 窗口并排排列时，</font><font style="vertical-align: inherit;">可以单击 RViz 窗口左侧的“</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">下一步”按钮从一种状态进入另一种状态，同时可以单击</font></font></strong><font style="vertical-align: inherit;"></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">“继续”</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">按钮连续运行完整的拾放循环。</font></font></p>
 <p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">警告：</font></font></strong><font style="vertical-align: inherit;"></font><code>safe_spawner</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">需要监视调用 shell 脚本的</font><font style="vertical-align: inherit;">终端窗口是否有</font></font><code>Failed to call service calculate_ik</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">错误，在这种情况下，需要终止所有正在运行的进程并</font></font><code>safe_spawner</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">再次调用脚本。</font></font></p>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如图 6.1 所示，RViz 中的状态消息随着拾放模拟的不同阶段的遍历而变化。</font><font style="vertical-align: inherit;">在 Gazebo 窗口中观察到驱动情况。</font></font></p>
 <p align="center" dir="auto">
-<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/gazebo_moveit_sync_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" data-target="animated-image.originalLink"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/gazebo_moveit_sync_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
       <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
         <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" target="_blank">
           
-        <span data-target="animated-image.imageContainer">
-            <img data-target="animated-image.replacedImage" alt="gazebo_moveit_sync_v2.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/gazebo_moveit_sync_v2.gif" style="display: block; opacity: 1;">
-          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="309" height="247"></canvas></span></a>
-        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play gazebo_moveit_sync_v2.gif" hidden=""></button>
-        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
-          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play gazebo_moveit_sync_v2.gif">
-            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
-            </path></svg>
-            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
-              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
-            </svg>
-          </button>
-          <a data-target="animated-image.openButton" aria-label="Open gazebo_moveit_sync_v2.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/gazebo_moveit_sync_v2.gif" target="_blank">
-            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
-            </svg>
-          </a>
-        </span>
-      </span></animated-image>
+    
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.1 单个拾放周期中遵循的步骤</font></font></b></sup>
 <br>
@@ -833,31 +805,11 @@ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
 </ul>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.2 显示 KR210 使用从 IK 实现获得的关节角度执行到下车位置的计划 EE 轨迹。</font></font></p>
 <p align="center" dir="auto">
-<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" data-target="animated-image.originalLink"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/path_following_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
+<animated-image data-catalyst="" style="width: 38%;"><a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" data-target="animated-image.originalLink"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/path_following_v2.gif" alt="" style="max-width: 100%; display: inline-block;" data-target="animated-image.originalImage"></a>
       <span class="AnimatedImagePlayer" data-target="animated-image.player" hidden="">
         <a data-target="animated-image.replacedLink" class="AnimatedImagePlayer-images" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" target="_blank">
           
-        <span data-target="animated-image.imageContainer">
-            <img data-target="animated-image.replacedImage" alt="path_following_v2.gif" class="AnimatedImagePlayer-animatedImage" src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/path_following_v2.gif" style="display: block; opacity: 1;">
-          <canvas class="AnimatedImagePlayer-stillImage" aria-hidden="true" width="309" height="253"></canvas></span></a>
-        <button data-target="animated-image.imageButton" class="AnimatedImagePlayer-images" tabindex="-1" aria-label="Play path_following_v2.gif" hidden=""></button>
-        <span class="AnimatedImagePlayer-controls" data-target="animated-image.controls" hidden="">
-          <button data-target="animated-image.playButton" class="AnimatedImagePlayer-button" aria-label="Play path_following_v2.gif">
-            <svg aria-hidden="true" focusable="false" class="octicon icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 13.5427V2.45734C4 1.82607 4.69692 1.4435 5.2295 1.78241L13.9394 7.32507C14.4334 7.63943 14.4334 8.36057 13.9394 8.67493L5.2295 14.2176C4.69692 14.5565 4 14.1739 4 13.5427Z">
-            </path></svg>
-            <svg aria-hidden="true" focusable="false" class="octicon icon-pause" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <rect x="4" y="2" width="3" height="12" rx="1"></rect>
-              <rect x="9" y="2" width="3" height="12" rx="1"></rect>
-            </svg>
-          </button>
-          <a data-target="animated-image.openButton" aria-label="Open path_following_v2.gif in new window" class="AnimatedImagePlayer-button" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/path_following_v2.gif" target="_blank">
-            <svg aria-hidden="true" class="octicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-              <path fill-rule="evenodd" d="M10.604 1h4.146a.25.25 0 01.25.25v4.146a.25.25 0 01-.427.177L13.03 4.03 9.28 7.78a.75.75 0 01-1.06-1.06l3.75-3.75-1.543-1.543A.25.25 0 0110.604 1zM3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"></path>
-            </svg>
-          </a>
-        </span>
-      </span></animated-image>
+    
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 6.2 执行规划的 EE 轨迹</font></font></b></sup>
 <br>
@@ -865,22 +817,22 @@ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
 </p>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对图 6.2 中的动画进行粗略目视检查表明，KR210 的六个关节正确遵循 IK 服务请求中接收到的 EE 位置的轨迹。</font><font style="vertical-align: inherit;">图 6.3 中也观察到了同样的情况，它全面比较了各种</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请求的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 轨迹与</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">遵循的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">EE 轨迹，并显示了每个轨迹的总体 EE 位置误差。</font></font></p>
 <p align="center" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_1_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_1_v3.png" alt="" width="76.8%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_1_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_1_v3.png" alt="" width="76.8%" style="max-width: 100%;"></a>
 <br>
 <br>
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_2_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_2_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_2_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_2_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_3_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_3_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_3_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_3_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_4_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_4_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_4_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_4_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_5_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_5_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_5_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_5_v3.png" alt="" width="77%" style="max-width: 100%;"></a>
 <br>
 <br>
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_6_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_6_v3.png" alt="" width="77.5%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/6-testing/ee_plot_6_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/6-testing/ee_plot_6_v3.png" alt="" width="77.5%" style="max-width: 100%;"></a>
 <br>
 <br>
 <sup><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">(a) IK 请求中收到的 EE 位置 (b) 收到的和 fk EE 位置的比较           </font></font></sup>
