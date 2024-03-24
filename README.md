@@ -1,8 +1,8 @@
 <div class="Box-sc-g0xbh4-0 bJMeLZ js-snippet-clipboard-copy-unpositioned" data-hpc="true"><article class="markdown-body entry-content container-lg" itemprop="text"><div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用 ROS 通过机械臂移动物体</font></font></h1><a id="user-content-moving-objects-with-a-robotic-arm-using-ros" class="anchor" aria-label="永久链接：使用 ROS 用机械臂移动物体" href="#moving-objects-with-a-robotic-arm-using-ros"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
 <div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于拾取和装载物体的 6 自由度 KUKA 串行机械手的运动学</font></font></h3><a id="user-content-kinematics-of-6-dof-kuka-serial-manipulator-for-picking-and-stowing-objects" class="anchor" aria-label="永久链接：用于拾取和装载物体的 6 自由度 KUKA 串行机械手的运动学" href="#kinematics-of-6-dof-kuka-serial-manipulator-for-picking-and-stowing-objects"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
-<p dir="auto"><a href="/Salman-H/pick-place-robot/blob/master/LICENSE"><img src="https://camo.githubusercontent.com/dce67f9aba42835ab42eeb2d09031c908b69eca4264099c36e94b393733c95c7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4c6963656e73652d4253442d627269676874677265656e2e737667" alt="许可证：BSD" data-canonical-src="https://img.shields.io/badge/License-BSD-brightgreen.svg" style="max-width: 100%;"></a></p>
+<p dir="auto"><a href="https://github.com/Salman-H/pick-place-robot/blob/master/LICENSE"><img src="https://camo.githubusercontent.com/dce67f9aba42835ab42eeb2d09031c908b69eca4264099c36e94b393733c95c7/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f4c6963656e73652d4253442d627269676874677265656e2e737667" alt="许可证：BSD" data-canonical-src="https://img.shields.io/badge/License-BSD-brightgreen.svg" style="max-width: 100%;"></a></p>
 <p align="left" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/gazebo_intro_v2.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/gazebo_intro_v2.png" alt="" width="51%" style="max-width: 100%;"></a><a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/moveit_intro_v3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/moveit_intro_v3.png" alt="" width="47.1%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/1-intro/gazebo_intro_v2.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/1-intro/gazebo_intro_v2.png" alt="" width="51%" style="max-width: 100%;"></a><a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/1-intro/moveit_intro_v3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/1-intro/moveit_intro_v3.png" alt="" width="47.1%" style="max-width: 100%;"></a>
 </p>
 <p align="left" dir="auto">
 <b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">萨尔曼·哈希米</font></font></b>
@@ -43,7 +43,7 @@
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该项目源自 Udacity 的</font></font><a href="https://github.com/udacity/RoboND-Kinematics-Project"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机械臂 - Pick &amp; Place 项目</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，而该项目又基于
 </font><font style="vertical-align: inherit;">Amazon Robotics LLC 赞助的</font></font><a href="https://www.amazonrobotics.com/#/roboticschallenge" rel="nofollow"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">亚马逊</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人挑战赛。</font></font></a><font style="vertical-align: inherit;"></font></p>
 <p align="left" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/amazon_robo_arm.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/amazon_robo_arm.png" alt="" width="90%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/1-intro/amazon_robo_arm.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/1-intro/amazon_robo_arm.png" alt="" width="90%" style="max-width: 100%;"></a>
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">亚马逊运营中心的机械臂将产品上架</font></font></b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">[来源：GeekWire]</font></font></sup>
 </p>
@@ -61,7 +61,7 @@
 <div class="markdown-heading" dir="auto"><h4 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关联</font></font></h4><a id="user-content-relevance" class="anchor" aria-label="永久链接：相关性" href="#relevance"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">拾取和放置对象的能力依赖于能够在 3D 环境中定位兴趣点并规划到这些点的移动轨迹。</font><font style="vertical-align: inherit;">工业中的所有机器人操纵器都依赖于这种能力。</font></font></p>
 <p align="left" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/1-intro/relevance.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/1-intro/relevance.png" alt="" width="95%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/1-intro/relevance.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/1-intro/relevance.png" alt="" width="95%" style="max-width: 100%;"></a>
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">机器人串行机械手几乎遍布各个行业</font></font></b></sup>
 </p>
@@ -152,45 +152,19 @@ git clone https://github.com/Salman-H/pick-place-robot" tabindex="0" role="butto
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">5. 安装缺少的依赖项（如果有）</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws
 rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws
-rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+     
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">6. 更改脚本文件的权限，使其可执行</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
 sudo chmod u+x target_spawn.py
 sudo chmod u+x IK_server.py
 sudo chmod u+x safe_spawner.sh</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-sudo chmod u+x target_spawn.py
-sudo chmod u+x IK_server.py
-sudo chmod u+x safe_spawner.sh" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+    
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7. 构建项目</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws
 catkin_make</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws
-catkin_make" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+    
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.打开</font><em><font style="vertical-align: inherit;">主</font></em><font style="vertical-align: inherit;">目录中的</font></font><a href="https://unix.stackexchange.com/questions/129143/what-is-the-purpose-of-bashrc-and-how-does-it-work" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">.bashrc文件</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">并在末尾添加以下命令</font></font><em><font style="vertical-align: inherit;"></font></em><font style="vertical-align: inherit;"></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c"><span class="pl-c">#</span> Inform Gazebo (sim software) where to look for project custom 3D models</span>
@@ -198,18 +172,7 @@ catkin_make" tabindex="0" role="button">
 
 <span class="pl-c"><span class="pl-c">#</span> Auto-source setup.bash since the pick and place simulator spins up different nodes in separate terminals</span>
 <span class="pl-c1">source</span> <span class="pl-k">~</span>/catkin_ws/devel/setup.bash</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="# Inform Gazebo (sim software) where to look for project custom 3D models
-export GAZEBO_MODEL_PATH=~/catkin_ws/src/pick-place-robot/kuka_arm/models
-
-# Auto-source setup.bash since the pick and place simulator spins up different nodes in separate terminals
-source ~/catkin_ws/devel/setup.bash" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+   
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">9. 保存 .bashrc 文件并打开新终端以使更改生效</font></font></p>
 <div class="markdown-heading" dir="auto"><h4 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测试模拟器</font></font></h4><a id="user-content-test-the-simulator" class="anchor" aria-label="永久链接：测试模拟器" href="#test-the-simulator"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
@@ -219,15 +182,7 @@ source ~/catkin_ws/devel/setup.bash" tabindex="0" role="button">
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11. 通过在新终端中调用 safe_spawner shell 脚本来启动项目</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
 $ ./safe_spawner.sh</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-$ ./safe_spawner.sh" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+    
   </div></div>
 <p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：</font></font></strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">如果 Gazebo 和 RViz 在几秒钟内没有启动，请通过</font></font><code>Ctrl+C</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在每个弹出的终端中输入来关闭由此 shell 脚本启动的所有进程。</font><font style="vertical-align: inherit;">然后重新运行 safe_spawner 脚本。</font></font></p>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Gazebo 和 RViz 启动并运行后，请确保在 Gazebo 世界中可以看到以下内容：</font></font></p>
@@ -240,15 +195,7 @@ $ ./safe_spawner.sh" tabindex="0" role="button">
 <p dir="auto"><font style="vertical-align: inherit;"></font><code>IK_server</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">12.从新的终端窗口</font><font style="vertical-align: inherit;">运行ROS 节点</font></font></p>
 <div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre><span class="pl-c1">cd</span> <span class="pl-k">~</span>/catkin_ws/src/pick-place-robot/kuka_arm/scripts
 rosrun kuka_arm IK_server.py</pre><div class="zeroclipboard-container">
-    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cd ~/catkin_ws/src/pick-place-robot/kuka_arm/scripts
-rosrun kuka_arm IK_server.py" tabindex="0" role="button">
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
-    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
-</svg>
-      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
-    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
-</svg>
-    </clipboard-copy>
+    
   </div></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">13. 并排排列 Gazebo 和 RViz 窗口，然后单击</font><font style="vertical-align: inherit;">RViz 左侧的</font></font><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">“下一步”按钮以在状态之间继续。</font></font></strong><font style="vertical-align: inherit;"></font></p>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">随着使用“下一步”按钮遍历模拟的不同阶段，RViz 中的状态消息会发生变化。</font><font style="vertical-align: inherit;">在 Gazebo 窗口中观察到驱动情况。</font></font></p>
@@ -276,7 +223,7 @@ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
 <li><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">：完整描述通过关节连接的 3D 自由空间中两个刚体的配置所需的坐标</font></font></li>
 </ul>
 <p align="left" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/workspace_RRR.jpg"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/workspace_RRR.jpg" alt="" width="95%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/3-theory/workspace_RRR.jpg"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/3-theory/workspace_RRR.jpg" alt="" width="95%" style="max-width: 100%;"></a>
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图 3.1 3-DOF 拟人机器人的几何结构</font></font></b></sup>
 <br>
@@ -310,7 +257,7 @@ rosrun kuka_arm IK_server.py" tabindex="0" role="button">
 <div class="markdown-heading" dir="auto"><h4 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">坐标系的旋转</font></font></h4><a id="user-content-rotation-of-coordinate-frames" class="anchor" aria-label="永久链接：坐标系的旋转" href="#rotation-of-coordinate-frames"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
 <p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">旋转矩阵是用其他坐标系</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表达</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一个坐标系中的向量的一种方法。</font></font></p>
 <p align="center" dir="auto">
-<a target="_blank" rel="noopener noreferrer" href="/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_derivation_ab_3.png"><img src="/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_derivation_ab_3.png" alt="" width="68%" style="max-width: 100%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://github.com/Salman-H/pick-place-robot/blob/master/figures/3-theory/rot_derivation_ab_3.png"><img src="https://github.com/Salman-H/pick-place-robot/raw/master/figures/3-theory/rot_derivation_ab_3.png" alt="" width="68%" style="max-width: 100%;"></a>
 <br>
 <sup><b><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图3.4 坐标系A和B之间的2D几何旋转</font></font></b></sup>
 <br>
